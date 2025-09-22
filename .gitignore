@@ -1,0 +1,97 @@
+# 助手
+.claude
+CLAUDE.md
+
+# 開發環境資料持久化
+infra/development/volume/
+*.log
+
+# 環境配置檔案 (含敏感資訊)
+.env
+*/.env
+**/.env
+infra/*/.env
+*.pem
+*/*.pem
+**/*.pem
+*.key
+*/*.key
+**/*.key
+*.crt
+*/*.crt
+**/*.crt
+# 排除敏感的配置文件，但保留模板和數據文件
+*.json
+*/*.json
+**/*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+
+# Node modules
+node_modules/
+dist/
+build/
+
+# Maven
+target/
+*/target/
+**/target/
+
+# Go
+src/database/db-manager/bin/
+src/database/db-manager/go.sum
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# 系統檔案
+.DS_Store
+Thumbs.db

@@ -1,0 +1,22 @@
+{
+  "api": {
+    "serp_api_key": "YOUR_SERP_API_KEY_HERE"
+  },
+  "targets": {
+    "永大夜市": {
+      "name": "永大夜市",
+      "data_id": "0x346e70da826345ad:0xc489fdddb16c5073"
+    }
+  },
+  "collection": {
+    "max_pages": 50,
+    "reviews_per_page": 20,
+    "target_reviews_count": 1000
+  },
+  "rate_limit": {
+    "request_delay_min": 2,
+    "request_delay_max": 3,
+    "max_retries": 3,
+    "retry_delay": 5
+  }
+}
