@@ -19,8 +19,49 @@ def setup_gemini():
     model = genai.GenerativeModel('gemini-2.5-flash-lite')
     return model
 
+def check_food_relevance_batch(model, review_batch):
+    """使用 Gemini API 批次判別評論是否與食物相關"""
+    # 建立批次 prompt
+    prompt = "請判斷以下夜市評論是否與食物相關，對每則評論回答 Yes 或 No。\n\n"
+
+    for i, (review_id, content) in enumerate(review_batch, 1):
+        prompt += f"評論{i}：「{content}」\n"
+
+    prompt += f"\n請按順序回答（只要數字和答案）：\n"
+    for i in range(1, len(review_batch) + 1):
+        prompt += f"{i}. Yes/No\n"
+
+    try:
+        response = model.generate_content(prompt)
+        result = response.text.strip()
+
+        # 解析批次結果
+        lines = result.split('\n')
+        results = []
+
+        for i, line in enumerate(lines):
+            line = line.strip()
+            if line and (str(i+1) in line or f"{i+1}." in line):
+                if 'Yes' in line or 'yes' in line or 'YES' in line:
+                    results.append(True)
+                elif 'No' in line or 'no' in line or 'NO' in line:
+                    results.append(False)
+                else:
+                    results.append(None)
+
+        # 確保結果數量正確
+        if len(results) != len(review_batch):
+            print(f"批次結果數量不符: 預期 {len(review_batch)}，得到 {len(results)}")
+            print(f"原始回應: {result}")
+            return None
+
+        return results
+    except Exception as e:
+        print(f"批次 API 呼叫錯誤: {e}")
+        return None
+
 def check_food_relevance(model, content):
-    """使用 Gemini API 判別評論是否與食物相關"""
+    """使用 Gemini API 判別單則評論是否與食物相關（備用方法）"""
     prompt = f"""請判斷以下夜市評論是否與食物相關。
 如果提到食物、菜品、口味、價格、份量等，回答 "Yes"
 如果只談論環境、設施、管理、服務等，回答 "No"
@@ -55,7 +96,7 @@ def connect_database():
         return None
 
 def process_reviews():
-    """處理評論資料"""
+    """處理評論資料（批次處理版本）"""
     # 設定 Gemini API
     try:
         model = setup_gemini()
@@ -88,46 +129,79 @@ def process_reviews():
             print("沒有需要處理的評論")
             return
 
-        # 處理每則評論
+        # 批次處理設定
+        batch_size = 15
         processed = 0
         food_related = 0
         non_food_related = 0
         failed = 0
 
-        for review_id, content in reviews:
-            print(f"處理第 {processed + 1}/{total_reviews} 則評論 (ID: {review_id})")
+        # 分批處理評論
+        for i in range(0, total_reviews, batch_size):
+            batch = reviews[i:i + batch_size]
+            batch_num = i // batch_size + 1
+            total_batches = (total_reviews + batch_size - 1) // batch_size
 
-            # 呼叫 Gemini API 判別
-            is_food_related = check_food_relevance(model, content)
+            print(f"\n處理第 {batch_num}/{total_batches} 批次 ({len(batch)} 則評論)")
 
-            if is_food_related is not None:
-                # 更新資料庫
-                cursor.execute("""
-                    UPDATE review_analysis
-                    SET is_project_related = %s
-                    WHERE id = %s
-                """, (is_food_related, review_id))
+            # 批次 API 呼叫
+            batch_results = check_food_relevance_batch(model, batch)
 
-                if is_food_related:
-                    food_related += 1
-                else:
-                    non_food_related += 1
+            if batch_results is not None and len(batch_results) == len(batch):
+                # 批次處理成功
+                for j, (review_id, content) in enumerate(batch):
+                    is_food_related = batch_results[j]
 
-                processed += 1
+                    if is_food_related is not None:
+                        # 更新資料庫
+                        cursor.execute("""
+                            UPDATE review_analysis
+                            SET is_project_related = %s
+                            WHERE id = %s
+                        """, (is_food_related, review_id))
 
-                # 每處理 10 則評論就提交一次
-                if processed % 10 == 0:
-                    conn.commit()
-                    print(f"已處理 {processed} 則評論，已提交資料庫")
+                        if is_food_related:
+                            food_related += 1
+                        else:
+                            non_food_related += 1
 
-                # 加入延遲避免超過 API 限制（免費層級每分鐘 15 次）
-                # 每處理一則評論後等待 5 秒，確保不超過限制
-                time.sleep(5)
+                        processed += 1
+
+                # 提交批次結果
+                conn.commit()
+                print(f"批次 {batch_num} 處理完成，已更新資料庫")
+
+                # 批次間延遲（避免 API 限制）
+                if batch_num < total_batches:
+                    time.sleep(5)
             else:
-                failed += 1
-                print(f"第 {processed + 1} 則評論處理失敗")
-                # 失敗時也要延遲，避免連續失敗
-                time.sleep(5)
+                # 批次處理失敗，回退到逐則處理
+                print(f"批次 {batch_num} 處理失敗，回退到逐則處理")
+
+                for review_id, content in batch:
+                    print(f"  處理評論 ID: {review_id}")
+
+                    is_food_related = check_food_relevance(model, content)
+
+                    if is_food_related is not None:
+                        cursor.execute("""
+                            UPDATE review_analysis
+                            SET is_project_related = %s
+                            WHERE id = %s
+                        """, (is_food_related, review_id))
+
+                        if is_food_related:
+                            food_related += 1
+                        else:
+                            non_food_related += 1
+
+                        processed += 1
+                        time.sleep(2)  # 較短的延遲
+                    else:
+                        failed += 1
+                        print(f"  評論 ID {review_id} 處理失敗")
+
+                conn.commit()
 
         # 最終提交
         conn.commit()
