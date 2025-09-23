@@ -24,7 +24,7 @@ logging.basicConfig(
 
 # 設定 Gemini API
 genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-2.5-flash-lite')
 
 # 提取 Prompt 模板
 EXTRACTION_PROMPT = """
@@ -56,7 +56,7 @@ def get_pending_reviews(batch_size=10):
         SELECT id, content
         FROM review_analysis
         WHERE has_specific_food_mention = TRUE
-            AND is_food_items_extracted = FALSE
+            AND (is_food_items_extracted = FALSE OR is_food_items_extracted IS NULL)
         ORDER BY id
         LIMIT %s
         """

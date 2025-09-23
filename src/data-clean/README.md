@@ -22,6 +22,8 @@ cp .env.example .env
 # 2. docs/sql/02-create-tables.sql
 # 3. docs/sql/03-create-review-filter-table.sql
 # 4. docs/sql/04-add-specific-food-column.sql
+# 5. docs/sql/05-create-extracted-food-items-table.sql
+# 6. docs/sql/06-add-data-completeness-column.sql
 ```
 
 ## 📜 腳本說明
@@ -53,6 +55,24 @@ python specific_food_analyzer.py
 - 判別是否提到具體料理名稱、店家等
 - 更新 `has_specific_food_mention` 欄位 (TRUE=具體提及, FALSE=泛指)
 
+### 4. extract_food_items.py
+**用途**: 將具體食物評論結構化提取為可分析的資料項目
+```bash
+python extract_food_items.py
+```
+- 使用 Gemini 2.5 Flash-Lite 模型分析具體食物評論
+- 提取料理名稱、店家名稱、描述、價格、情感評價等結構化資料
+- 儲存到 `extracted_food_items` 表，支援一對多關係（一則評論可提取多個項目）
+- 自動標記資料完整度 (complete/partial/minimal)
+
+### 5. export_specific_food_content.py
+**用途**: 匯出具體食物評論內容到 Markdown 檔案
+```bash
+python export_specific_food_content.py
+```
+- 提取所有 `has_specific_food_mention = 1` 的評論內容
+- 輸出為編號格式的 `specific_food_mentions.md` 檔案
+
 ## 🔍 驗證工具
 
 ### verify_data.py
@@ -65,6 +85,22 @@ python verify_data.py
 1. **資料匯入** → `import_data.py`
 2. **食物相關性分析** → `food_relevance_checker.py`
 3. **具體食物項目分析** → `specific_food_analyzer.py`
-4. **結果驗證** → `verify_data.py`
+4. **結構化資料提取** → `extract_food_items.py`
+5. **結果驗證** → `verify_data.py`
+
+## 📁 輸出檔案
+- `specific_food_mentions.md` - 具體食物評論內容（由 `export_specific_food_content.py` 產生）
+- `extract_food_items.log` - 結構化提取過程日誌
+
+## 📋 資料庫表結構
+- `reviews` - 原始評論資料
+- `search_metadata` - 搜尋元數據
+- `review_analysis` - 評論分析結果（包含食物相關性標記）
+- `extracted_food_items` - 結構化食物項目（396 個項目，涵蓋 158 則評論）
+
+## 📖 詳細文檔
+- `docs/具體食物項目分析計劃.md` - 分析計劃說明
+- `docs/結構化食物資料提取記錄.md` - 提取過程記錄
+- `docs/sql/` - 所有資料庫建立和修改腳本
 
 詳細說明請參考 `docs/` 目錄下的相關文檔。
