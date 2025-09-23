@@ -1,0 +1,43 @@
+services:
+  # MySQL 9.4.0 資料庫服務
+  mysql:
+    image: mysql:9.4.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - ./volume/mysql:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+      - ./mysql/conf:/etc/mysql/conf.d
+    networks:
+      - app_network
+    # MySQL 9.4.0 預設使用 caching_sha2_password，移除過時的 mysql_native_password 設定
+
+  # phpMyAdmin 管理介面
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      UPLOAD_LIMIT: 1024M
+    volumes:
+      - ./volume/phpmyadmin/themes:/var/www/html/themes
+    ports:
+      - "${PHPMYADMIN_PORT:-8080}:80"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
