@@ -13,10 +13,16 @@ spring:
       charset: UTF-8
       force: true
   datasource:
-    url: jdbc:mysql://mysql:3306/manager_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei
-    username: root
-    password: your_secure_password_here
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    primary:
+      url: jdbc:mysql://mysql:3306/manager_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei
+      username: manager_user
+      password: manager_secure_password
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    reviews:
+      url: jdbc:mysql://mysql:3306/manager_reviews_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei
+      username: manager_user
+      password: manager_secure_password
+      driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
