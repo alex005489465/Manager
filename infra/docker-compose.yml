@@ -59,6 +59,26 @@ services:
     depends_on:
       - mysql
 
+  # Node.js 24 前端開發環境
+  node-dev:
+    image: node:24.5.0-alpine
+    container_name: manager_node_dev
+    restart: unless-stopped
+    working_dir: /workspace
+    command: tail -f /dev/null  # 保持容器運行
+    environment:
+      - NODE_ENV=development
+      - GENERATE_SOURCEMAP=true
+      - FAST_REFRESH=true
+    ports:
+      - "${NODE_DEV_PORT:-3000}:3000"        # React開發服務器端口
+    volumes:
+      - ../src/frontend:/workspace # 掛載前端源碼目錄
+      - ./volume/node-dev/.npm:/root/.npm     # npm快取目錄
+    networks:
+      - app_network
+
+
 networks:
   app_network:
     driver: bridge

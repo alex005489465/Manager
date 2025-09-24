@@ -24,6 +24,12 @@ infra/*/.env
 *.json
 */*.json
 **/*.json
+!*.package.json
+!**/package.json
+!*.package-lock.json
+!**/package-lock.json
+!*.tsconfig.json
+!**/tsconfig.json
 
 # Python
 __pycache__/
