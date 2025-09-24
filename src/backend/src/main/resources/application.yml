@@ -14,12 +14,12 @@ spring:
       force: true
   datasource:
     primary:
-      url: jdbc:mysql://mysql:3306/manager_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei
+      jdbc-url: jdbc:mysql://mysql:3306/manager_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei
       username: manager_user
       password: manager_secure_password
       driver-class-name: com.mysql.cj.jdbc.Driver
     reviews:
-      url: jdbc:mysql://mysql:3306/manager_reviews_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei
+      jdbc-url: jdbc:mysql://mysql:3306/manager_reviews_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Taipei
       username: manager_user
       password: manager_secure_password
       driver-class-name: com.mysql.cj.jdbc.Driver

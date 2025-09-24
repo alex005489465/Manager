@@ -20,38 +20,39 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 public class DatabaseConfig {
 
-  @Primary
-  @Bean(name = "primaryDataSource")
-  @ConfigurationProperties(prefix = "spring.datasource.primary")
-  public DataSource primaryDataSource() {
-    return DataSourceBuilder.create().build();
-  }
+  // @Primary
+  // @Bean(name = "primaryDataSource")
+  // @ConfigurationProperties(prefix = "spring.datasource.primary")
+  // public DataSource primaryDataSource() {
+  //   return DataSourceBuilder.create().build();
+  // }
 
-  @Bean(name = "reviewsDataSource")
+  @Primary
+  @Bean(name = "dataSource")
   @ConfigurationProperties(prefix = "spring.datasource.reviews")
   public DataSource reviewsDataSource() {
     return DataSourceBuilder.create().build();
   }
 
+  // @Primary
+  // @Bean(name = "primaryEntityManagerFactory")
+  // public LocalContainerEntityManagerFactoryBean primaryEntityManagerFactory(
+  //     @Qualifier("primaryDataSource") DataSource dataSource) {
+  //
+  //   LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+  //   em.setDataSource(dataSource);
+  //
+  //   HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+  //   em.setJpaVendorAdapter(vendorAdapter);
+  //   em.setJpaPropertyMap(getJpaProperties());
+  //
+  //   return em;
+  // }
+
   @Primary
-  @Bean(name = "primaryEntityManagerFactory")
-  public LocalContainerEntityManagerFactoryBean primaryEntityManagerFactory(
-      @Qualifier("primaryDataSource") DataSource dataSource) {
-
-    LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
-    em.setDataSource(dataSource);
-    em.setPackagesToScan("entity.primary");
-
-    HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
-    em.setJpaVendorAdapter(vendorAdapter);
-    em.setJpaPropertyMap(getJpaProperties());
-
-    return em;
-  }
-
-  @Bean(name = "reviewsEntityManagerFactory")
+  @Bean(name = "entityManagerFactory")
   public LocalContainerEntityManagerFactoryBean reviewsEntityManagerFactory(
-      @Qualifier("reviewsDataSource") DataSource dataSource) {
+      @Qualifier("dataSource") DataSource dataSource) {
 
     LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
     em.setDataSource(dataSource);
@@ -64,16 +65,17 @@ public class DatabaseConfig {
     return em;
   }
 
-  @Primary
-  @Bean(name = "primaryTransactionManager")
-  public PlatformTransactionManager primaryTransactionManager(
-      @Qualifier("primaryEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
-    return new JpaTransactionManager(entityManagerFactory);
-  }
+  // @Primary
+  // @Bean(name = "primaryTransactionManager")
+  // public PlatformTransactionManager primaryTransactionManager(
+  //     @Qualifier("primaryEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+  //   return new JpaTransactionManager(entityManagerFactory);
+  // }
 
-  @Bean(name = "reviewsTransactionManager")
+  @Primary
+  @Bean(name = "transactionManager")
   public PlatformTransactionManager reviewsTransactionManager(
-      @Qualifier("reviewsEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+      @Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
     return new JpaTransactionManager(entityManagerFactory);
   }
 

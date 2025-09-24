@@ -34,8 +34,6 @@ curl http://localhost:8081/actuator/health
 curl http://localhost:8081/                     # 主頁：Manager 系統
 curl http://localhost:8081/health               # 健康檢查
 curl http://localhost:8081/api/health           # API健康檢查  
-curl http://localhost:8081/hello                # 問候端點
-curl -X POST http://localhost:8081/api/demo     # 範例操作
 
 # 系統監控
 curl http://localhost:8081/actuator/health      # 健康檢查：{"status":"UP"}
