@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @Configuration
 @EnableTransactionManagement
 @EnableJpaRepositories(
-    basePackages = "repository.reviews",
+    basePackages = "modules.fooditem.repository",
     entityManagerFactoryRef = "reviewsEntityManagerFactory",
     transactionManagerRef = "reviewsTransactionManager")
 public class ReviewsRepositoryConfig {}
