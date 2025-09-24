@@ -44,10 +44,17 @@ public class ExtractedFoodItemService {
     if (!StringUtils.hasText(sentiment)) {
       return null;
     }
+
+    // 支援明確查詢 null 值的特殊值
+    if ("null".equalsIgnoreCase(sentiment.trim()) || "unknown".equalsIgnoreCase(sentiment.trim())) {
+      return null;
+    }
+
     try {
-      return RatingSentiment.valueOf(sentiment.toLowerCase());
+      return RatingSentiment.valueOf(sentiment.toLowerCase().trim());
     } catch (IllegalArgumentException e) {
-      return null; // 無效值時返回 null，讓查詢忽略此條件
+      // 無效值時返回 null，讓查詢忽略此條件
+      return null;
     }
   }
 
@@ -55,10 +62,17 @@ public class ExtractedFoodItemService {
     if (!StringUtils.hasText(completeness)) {
       return null;
     }
+
+    // 支援明確查詢 null 值的特殊值
+    if ("null".equalsIgnoreCase(completeness.trim()) || "unknown".equalsIgnoreCase(completeness.trim())) {
+      return null;
+    }
+
     try {
-      return DataCompleteness.valueOf(completeness.toLowerCase());
+      return DataCompleteness.valueOf(completeness.toLowerCase().trim());
     } catch (IllegalArgumentException e) {
-      return null; // 無效值時返回 null，讓查詢忽略此條件
+      // 無效值時返回 null，讓查詢忽略此條件
+      return null;
     }
   }
 }

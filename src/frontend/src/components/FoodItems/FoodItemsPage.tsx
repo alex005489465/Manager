@@ -24,17 +24,13 @@ export const FoodItemsPage: React.FC = () => {
     pageSize: 20
   });
 
-  // 防抖搜尋函數
-  const debounce = useCallback((func: Function, delay: number) => {
-    let timeoutId: NodeJS.Timeout;
-    return (...args: any[]) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func.apply(null, args), delay);
-    };
-  }, []);
 
   const fetchFoodItems = useCallback(async (searchFilters: SearchFilters) => {
     setLoading(true);
+    // 清空舊資料，確保不會顯示陳舊資料
+    setFoodItems([]);
+    setPagination(prev => ({ ...prev, totalElements: 0 }));
+
     try {
       const response = await foodItemsApi.getFoodItems(searchFilters);
 
@@ -63,30 +59,15 @@ export const FoodItemsPage: React.FC = () => {
     }
   }, []);
 
-  // 防抖搜尋
-  const debouncedFetch = useCallback(
-    debounce((searchFilters: SearchFilters) => {
-      fetchFoodItems(searchFilters);
-    }, 500),
-    [fetchFoodItems, debounce]
-  );
-
   const handleSearch = useCallback(() => {
     fetchFoodItems(filters);
   }, [filters, fetchFoodItems]);
 
   const handleFiltersChange = useCallback((newFilters: SearchFilters) => {
     setFilters(newFilters);
-
-    // 如果是文字搜尋，使用防抖
-    if (newFilters.dishName !== filters.dishName ||
-        newFilters.vendorName !== filters.vendorName) {
-      debouncedFetch(newFilters);
-    } else {
-      // 篩選條件變更，立即搜尋
-      fetchFoodItems(newFilters);
-    }
-  }, [filters, debouncedFetch, fetchFoodItems]);
+    // 簡化邏輯：所有篩選條件變更都立即搜尋
+    fetchFoodItems(newFilters);
+  }, [fetchFoodItems]);
 
   const handlePaginationChange = useCallback((page: number, pageSize: number) => {
     const newFilters = {
@@ -101,7 +82,7 @@ export const FoodItemsPage: React.FC = () => {
   // 初始載入數據
   useEffect(() => {
     fetchFoodItems(filters);
-  }, []);
+  }, [fetchFoodItems]);
 
   return (
     <Layout style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
