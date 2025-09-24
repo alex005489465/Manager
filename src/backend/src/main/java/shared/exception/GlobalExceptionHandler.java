@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import shared.constant.ErrorCode;
 import shared.dto.ApiResponse;
 
 /** 全域異常處理器 @Spec: 待設計文件 - 錯誤回應格式標準 */
@@ -43,7 +44,7 @@ public class GlobalExceptionHandler {
 
     log.warn("參數驗證失敗: {}", errorMessage);
 
-    return ResponseEntity.ok(ApiResponse.error("VALIDATION_ERROR", errorMessage));
+    return ResponseEntity.ok(ApiResponse.error(ErrorCode.VALIDATION_ERROR.getCode(), errorMessage));
   }
 
   /**
@@ -56,6 +57,6 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiResponse<Void>> handleSystemException(Exception e) {
     log.error("系統異常", e);
 
-    return ResponseEntity.ok(ApiResponse.error("SYSTEM_ERROR", "系統內部錯誤"));
+    return ResponseEntity.ok(ApiResponse.error(ErrorCode.SYSTEM_ERROR.getCode(), "系統內部錯誤"));
   }
 }

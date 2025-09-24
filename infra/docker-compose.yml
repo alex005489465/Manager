@@ -51,7 +51,7 @@ services:
       - "${JAVA_DEV_PORT:-8081}:8080"        # Spring Boot應用端口
       - "${JAVA_DEBUG_PORT:-5005}:5005"      # 遠程除錯端口
     volumes:
-      - ../../src/backend:/workspace          # 掛載後端源碼目錄
+      - ../src/backend:/workspace          # 掛載後端源碼目錄
       - ./volume/java-dev/.m2:/root/.m2       # Maven倉庫目錄
       - ./volume/java-dev/logs:/workspace/logs # 應用日誌目錄
     networks:
