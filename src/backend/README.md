@@ -9,7 +9,7 @@
 
 ```bash
 # 1. 啟動Java開發服務
-cd ../../infra
+cd ../../infra/dev
 docker-compose up -d java-dev
 
 # 2. 啟動應用 (在容器內)

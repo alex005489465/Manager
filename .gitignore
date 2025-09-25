@@ -3,7 +3,7 @@
 CLAUDE.md
 
 # 開發環境資料持久化
-infra/volume/
+infra/dev/volume/
 *.log
 
 # 環境配置檔案 (含敏感資訊)

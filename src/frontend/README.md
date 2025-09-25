@@ -21,7 +21,7 @@
 ### 快速開始
 ```bash
 # 1. 啟動Node.js開發服務
-cd ../../infra
+cd ../../infra/dev
 docker-compose up -d node-dev
 
 # 2. 安裝依賴 (首次使用)
