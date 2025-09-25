@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Layout, message, Typography, Space } from 'antd';
 import { SearchBar } from './SearchBar';
 import { FoodItemsTable } from './FoodItemsTable';
+import { ThemeToggle } from '../ThemeToggle';
 import { SearchFilters, FoodItem, PaginationInfo } from '../../types/foodItems';
 import { foodItemsApi } from '../../services/foodItemsApi';
 
@@ -85,17 +86,18 @@ export const FoodItemsPage: React.FC = () => {
   }, [fetchFoodItems]);
 
   return (
-    <Layout style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+    <Layout style={{ minHeight: '100vh' }}>
       <Header style={{
-        backgroundColor: '#fff',
         boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        padding: '0 24px'
+        padding: '0 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
-        <Space align="center" style={{ height: '100%' }}>
-          <Title level={3} style={{ margin: 0, color: '#1890ff' }}>
-            食物項目管理系統
-          </Title>
-        </Space>
+        <Title level={3} style={{ margin: 0, color: '#1890ff' }}>
+          食物項目管理系統
+        </Title>
+        <ThemeToggle size="middle" />
       </Header>
 
       <Content style={{ padding: '24px' }}>
