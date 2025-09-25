@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Input, Select, Space, Button } from 'antd';
 import { SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import { SearchFilters, RatingSentiment, DataCompleteness } from '../../types/foodItems';
@@ -19,20 +19,45 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   onSearch,
   loading = false
 }) => {
-  const handleDishNameChange = (value: string) => {
-    onFiltersChange({
-      ...filters,
-      dishName: value || undefined,
-      page: 1 // 重置到第一頁
+  // 內部狀態管理文字輸入
+  const [textInputs, setTextInputs] = useState({
+    dishName: filters.dishName || '',
+    vendorName: filters.vendorName || ''
+  });
+
+  // 當 filters 變更時同步內部狀態（處理清除篩選等外部變更）
+  useEffect(() => {
+    setTextInputs({
+      dishName: filters.dishName || '',
+      vendorName: filters.vendorName || ''
     });
+  }, [filters.dishName, filters.vendorName]);
+  // 文字輸入變更處理（只更新內部狀態）
+  const handleDishNameChange = (value: string) => {
+    setTextInputs(prev => ({
+      ...prev,
+      dishName: value
+    }));
   };
 
   const handleVendorNameChange = (value: string) => {
+    setTextInputs(prev => ({
+      ...prev,
+      vendorName: value
+    }));
+  };
+
+  // 文字搜尋處理（同步狀態並觸發搜尋）
+  const handleTextSearch = () => {
+    // 先同步文字輸入到 filters
     onFiltersChange({
       ...filters,
-      vendorName: value || undefined,
-      page: 1
+      dishName: textInputs.dishName || undefined,
+      vendorName: textInputs.vendorName || undefined,
+      page: 1 // 重置到第一頁
     });
+    // 然後觸發搜尋
+    setTimeout(() => onSearch(), 0);
   };
 
   const handleRatingSentimentChange = (value: RatingSentiment | undefined) => {
@@ -52,6 +77,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   };
 
   const handleClearFilters = () => {
+    // 清除內部文字狀態
+    setTextInputs({
+      dishName: '',
+      vendorName: ''
+    });
+    // 清除 filters
     onFiltersChange({
       page: 1,
       pageSize: filters.pageSize || 20
@@ -80,7 +111,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
           <Button
             type="primary"
             icon={<SearchOutlined />}
-            onClick={onSearch}
+            onClick={handleTextSearch}
             loading={loading}
           >
             搜尋
@@ -94,9 +125,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             <div style={{ marginBottom: 8, fontWeight: 500 }}>料理名稱</div>
             <Search
               placeholder="輸入料理名稱"
-              value={filters.dishName || ''}
+              value={textInputs.dishName}
               onChange={(e) => handleDishNameChange(e.target.value)}
-              onSearch={onSearch}
+              onSearch={handleTextSearch}
               disabled={loading}
               allowClear
             />
@@ -108,9 +139,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             <div style={{ marginBottom: 8, fontWeight: 500 }}>店家名稱</div>
             <Search
               placeholder="輸入店家名稱"
-              value={filters.vendorName || ''}
+              value={textInputs.vendorName}
               onChange={(e) => handleVendorNameChange(e.target.value)}
-              onSearch={onSearch}
+              onSearch={handleTextSearch}
               disabled={loading}
               allowClear
             />

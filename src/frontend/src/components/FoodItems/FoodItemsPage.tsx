@@ -66,7 +66,8 @@ export const FoodItemsPage: React.FC = () => {
 
   const handleFiltersChange = useCallback((newFilters: SearchFilters) => {
     setFilters(newFilters);
-    // 簡化邏輯：所有篩選條件變更都立即搜尋
+    // 文字搜索由 SearchBar 內部處理，這裡主要處理篩選條件和搜尋同步
+    // 所有透過此函數的變更都會立即搜尋
     fetchFoodItems(newFilters);
   }, [fetchFoodItems]);
 
