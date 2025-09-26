@@ -1,0 +1,76 @@
+# ================================
+# Docker 構建忽略檔案清單
+# 優化構建速度和鏡像大小
+# ================================
+
+# === Git 相關 ===
+.git
+.gitignore
+.gitattributes
+.github/
+
+# === IDE 和編輯器 ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === Maven 構建產物 ===
+target/
+*.jar
+*.war
+*.ear
+
+# === 日誌檔案 ===
+logs/
+*.log
+*.log.*
+
+# === 暫存檔案 ===
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# === Node.js (如果有前端構建工具) ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# === 測試覆蓋率報告 ===
+coverage/
+.nyc_output/
+
+# === Spring Boot DevTools ===
+spring-boot-devtools.properties
+
+# === 環境配置檔案（避免洩漏敏感資訊） ===
+.env
+.env.local
+.env.*.local
+
+# === 開發工具配置 ===
+.mvn/wrapper/maven-wrapper.properties
+mvnw
+mvnw.cmd
+
+# === Docker 相關 ===
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# === 文件檔案 ===
+*.md
+docs/
+README*
+
+# === 快取檔案 ===
+.m2/
+.cache/
+
+# === 其他開發檔案 ===
+*.pid
+*.seed
+*.pid.lock

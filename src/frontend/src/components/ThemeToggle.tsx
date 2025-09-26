@@ -12,13 +12,13 @@ import { useTheme, ThemeMode } from '../contexts/ThemeContext';
 interface ThemeToggleProps {
   showText?: boolean;
   size?: 'large' | 'middle' | 'small';
-  type?: 'default' | 'primary' | 'ghost' | 'dashed' | 'link' | 'text';
+  type?: 'default' | 'primary' | 'dashed' | 'link' | 'text';
 }
 
 export const ThemeToggle: React.FC<ThemeToggleProps> = ({
   showText = false,
   size = 'middle',
-  type = 'ghost'
+  type = 'text'
 }) => {
   const { themeMode, activeTheme, setThemeMode } = useTheme();
 

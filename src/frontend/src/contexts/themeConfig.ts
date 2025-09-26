@@ -72,7 +72,6 @@ const darkTheme: ThemeConfig = {
       footerBg: '#1f1f1f',
       triggerBg: '#1f1f1f',
       triggerColor: 'rgba(255, 255, 255, 0.65)',
-      zeroTriggerBg: '#1f1f1f',
     },
     Card: {
       colorBgContainer: '#1f1f1f',

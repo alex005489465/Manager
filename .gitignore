@@ -4,7 +4,9 @@ CLAUDE.md
 
 # 開發環境資料持久化
 infra/dev/volume/
+infra/prod/docker/volume/
 *.log
+infra/prod/docker/java
 
 # 環境配置檔案 (含敏感資訊)
 .env
