@@ -7,6 +7,7 @@ infra/dev/volume/
 infra/prod/backend-service/volume/
 *.log
 infra/prod/backend-service/java
+output/
 
 # 環境配置檔案 (含敏感資訊)
 .env
