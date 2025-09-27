@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  mysql-cpu:
+    image: ${MYSQL_IMAGE}
+    platform: linux/arm64
+    container_name: ${MYSQL_CPU_CONTAINER}
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_CPU_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_CPU_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./mysql-config/mysql-cpu.cnf:/etc/mysql/conf.d/mysql.cnf:ro
+      - mysql_cpu_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  mysql-memory:
+    image: ${MYSQL_IMAGE}
+    platform: linux/arm64
+    container_name: ${MYSQL_MEMORY_CONTAINER}
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_MEMORY_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_MEMORY_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./mysql-config/mysql-memory.cnf:/etc/mysql/conf.d/mysql.cnf:ro
+      - mysql_memory_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  mysql-disk:
+    image: ${MYSQL_IMAGE}
+    platform: linux/arm64
+    container_name: ${MYSQL_DISK_CONTAINER}
+    restart: unless-stopped
+    ports:
+      - "${MYSQL_DISK_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DISK_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./mysql-config/mysql-disk.cnf:/etc/mysql/conf.d/mysql.cnf:ro
+      - mysql_disk_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+volumes:
+  mysql_cpu_data:
+    driver: local
+  mysql_memory_data:
+    driver: local
+  mysql_disk_data:
+    driver: local

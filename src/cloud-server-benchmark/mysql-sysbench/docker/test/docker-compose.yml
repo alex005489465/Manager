@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  sysbench:
+    image: ${SYSBENCH_IMAGE}
+    platform: linux/arm64
+    container_name: ${SYSBENCH_CONTAINER}
+    restart: unless-stopped
+    working_dir: ${WORKING_DIR}
+    volumes:
+      - ../../scripts:${WORKING_DIR}/scripts:ro
+      - ../../results:${WORKING_DIR}/results
+      - /tmp/sysbench:/tmp/sysbench
+    environment:
+      - MYSQL_HOST_CPU=${MYSQL_HOST_CPU}
+      - MYSQL_HOST_MEMORY=${MYSQL_HOST_MEMORY}
+      - MYSQL_HOST_DISK=${MYSQL_HOST_DISK}
+      - MYSQL_PORT_CPU=${MYSQL_PORT_CPU}
+      - MYSQL_PORT_MEMORY=${MYSQL_PORT_MEMORY}
+      - MYSQL_PORT_DISK=${MYSQL_PORT_DISK}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - TEST_THREADS=${TEST_THREADS}
+      - TEST_DURATION=${TEST_DURATION}
+    depends_on:
+      - mysql-client
+    command: >
+      sh -c "
+      echo 'sysbench測試容器已啟動，等待手動執行測試腳本...' &&
+      echo '執行測試請使用: docker exec -it ${SYSBENCH_CONTAINER} ${WORKING_DIR}/scripts/three-tier-test.sh' &&
+      tail -f /dev/null
+      "
+
+  mysql-client:
+    image: ${MYSQL_CLIENT_IMAGE}
+    platform: linux/arm64
+    container_name: ${MYSQL_CLIENT_CONTAINER}
+    restart: unless-stopped
+    volumes:
+      - ../../scripts:${WORKING_DIR}/scripts:ro
+    command: >
+      sh -c "
+      echo 'MySQL客戶端工具容器已啟動...' &&
+      tail -f /dev/null
+      "

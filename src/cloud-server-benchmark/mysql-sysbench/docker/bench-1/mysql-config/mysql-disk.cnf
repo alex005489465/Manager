@@ -1,0 +1,55 @@
+[mysqld]
+# MySQL Disk測試專用配置
+# 目標：小記憶體緩存，磁碟I/O壓力測試
+
+# 基本設定
+port = 3306
+bind-address = 0.0.0.0
+socket = /tmp/mysql.sock
+
+# 記憶體配置 - 小Buffer Pool用於磁碟I/O測試
+innodb_buffer_pool_size = 256M
+innodb_buffer_pool_instances = 1
+
+# 連接設定
+max_connections = 500
+max_connect_errors = 100000
+thread_cache_size = 8
+
+# InnoDB設定 - 增加I/O壓力
+innodb_flush_log_at_trx_commit = 1
+innodb_log_file_size = 128M
+innodb_log_buffer_size = 16M
+innodb_read_io_threads = 2
+innodb_write_io_threads = 2
+innodb_io_capacity = 500
+innodb_io_capacity_max = 1000
+
+# 更頻繁的刷新以增加磁碟壓力
+innodb_flush_method = O_DIRECT
+innodb_flush_neighbors = 1
+
+# 查詢快取 - 關閉避免干擾測試
+query_cache_type = 0
+query_cache_size = 0
+
+# 日誌設定
+log-error = /var/log/mysql/error.log
+slow_query_log = 1
+slow_query_log_file = /var/log/mysql/slow.log
+long_query_time = 2
+
+# 其他優化
+table_open_cache = 1000
+tmp_table_size = 64M
+max_heap_table_size = 64M
+
+# 字符集
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+[mysql]
+default-character-set = utf8mb4
+
+[client]
+default-character-set = utf8mb4
