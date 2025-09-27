@@ -7,15 +7,24 @@
 """
 
 import sys
+import os
 import logging
+import warnings
 from orchestration.workflows.analysis_workflow import AnalysisWorkflow
+
+# 忽略所有警告
+warnings.filterwarnings('ignore')
+
+# 確保 output 目錄存在（於日誌設定前）
+output_dir = os.path.join(os.path.dirname(__file__), 'output')
+os.makedirs(output_dir, exist_ok=True)
 
 # 設定日誌
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('./output/analysis.log', encoding='utf-8'),
+        logging.FileHandler(os.path.join(output_dir, 'analysis.log'), encoding='utf-8'),
         logging.StreamHandler()
     ]
 )

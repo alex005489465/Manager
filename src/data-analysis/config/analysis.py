@@ -6,6 +6,8 @@
 包含商機分析參數和閾值設定
 """
 
+import os
+
 # 商機分析參數
 ANALYSIS_CONFIG = {
     # 低評分定義 (1-2 星)
@@ -21,9 +23,9 @@ ANALYSIS_CONFIG = {
     # 排行榜數量
     'top_n_items': 10,
 
-    # 輸出目錄
-    'output_dir': './output',
-    'charts_dir': './output/charts',
-    'reports_dir': './output/reports',
-    'data_dir': './output/data'
+    # 輸出目錄 - 相對於 main.py 同層目錄
+    'output_dir': os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output'),
+    'charts_dir': os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output', 'charts'),
+    'reports_dir': os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output', 'reports'),
+    'data_dir': os.path.join(os.path.dirname(os.path.dirname(__file__)), 'output', 'data')
 }

@@ -13,15 +13,17 @@ import os
 import logging
 from abc import ABC, abstractmethod
 import sys
-import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from config import CHART_CONFIG
 
-# 設定中文字體和日誌
-matplotlib.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'Arial Unicode MS']
-matplotlib.rcParams['axes.unicode_minus'] = False
+# 設定日誌
 logger = logging.getLogger(__name__)
+
+# 設定警告抑制
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib.font_manager')
 
 
 class BaseChart(ABC):
@@ -41,6 +43,13 @@ class BaseChart(ABC):
         # 設定圖表樣式
         plt.style.use('default')  # 改用 default 樣式避免 seaborn 版本問題
         sns.set_palette(CHART_CONFIG['color_palette'])
+
+        # 重新設定中文字體（必須在 plt.style.use 之後）
+        matplotlib.rcParams['font.sans-serif'] = ['Noto Sans TC', 'Noto Sans HK', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei']
+        matplotlib.rcParams['font.family'] = 'sans-serif'
+        matplotlib.rcParams['axes.unicode_minus'] = False
+
+        logger.info(f"重新設定中文字體: {matplotlib.rcParams['font.sans-serif'][0]}")
 
     def save_chart(self, filename, dpi=None, bbox_inches='tight'):
         """

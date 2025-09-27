@@ -12,6 +12,8 @@ from contextlib import contextmanager
 import logging
 import sys
 import os
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from config import DATABASE_CONFIG, QUERY_CONFIG
@@ -33,6 +35,7 @@ class DatabaseConnector:
         """
         self.config = config if config is not None else DATABASE_CONFIG
         self.connection = None
+        self._engine = None
 
     def connect(self):
         """
@@ -69,6 +72,23 @@ class DatabaseConnector:
                 conn.close()
                 logger.debug("資料庫連接已關閉")
 
+    def get_sqlalchemy_engine(self):
+        """
+        取得SQLAlchemy引擎
+
+        Returns:
+            Engine: SQLAlchemy引擎物件
+        """
+        if self._engine is None:
+            connection_string = (
+                f"mysql+mysqlconnector://{self.config['user']}:{self.config['password']}"
+                f"@{self.config['host']}:{self.config.get('port', 3306)}/{self.config['database']}"
+                f"?charset={self.config.get('charset', 'utf8mb4')}"
+            )
+            self._engine = create_engine(connection_string, echo=False)
+            logger.info("SQLAlchemy引擎建立成功")
+        return self._engine
+
     def execute_query(self, query, params=None):
         """
         執行查詢並返回 pandas DataFrame
@@ -81,9 +101,13 @@ class DatabaseConnector:
             pd.DataFrame: 查詢結果
         """
         try:
+            # 暫時使用mysql.connector連接，避免SQLAlchemy問題
             with self.get_connection() as conn:
                 logger.info(f"執行查詢: {query[:100]}...")
-                df = pd.read_sql(query, conn, params=params)
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    df = pd.read_sql(query, conn, params=params)
                 logger.info(f"查詢完成，返回 {len(df)} 筆記錄")
                 return df
         except Exception as e:
