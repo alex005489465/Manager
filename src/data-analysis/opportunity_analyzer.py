@@ -32,17 +32,83 @@ class OpportunityAnalyzer:
         self.min_samples_vendor = ANALYSIS_CONFIG['min_samples_vendor']
         self.top_n = ANALYSIS_CONFIG['top_n_items']
 
+    def analyze_business_opportunities(self):
+        """
+        分析統一商業標的商機（包含料理和店家）
+
+        Returns:
+            dict: 包含低評分數量、低評分比率、高評分參考的分析結果
+        """
+        logger.info("開始分析統一商業標的商機...")
+
+        # 按商業標的分組統計
+        business_stats = self.dataset.groupby('business_name').agg({
+            'rating': ['count', 'mean', lambda x: (x <= self.low_threshold).sum(),
+                      lambda x: (x >= self.high_threshold).sum()],
+            'business_type': 'first'  # 取得商業類型
+        }).round(2)
+
+        # 重新命名欄位
+        business_stats.columns = ['total_count', 'avg_rating', 'low_rating_count', 'high_rating_count', 'business_type']
+        business_stats['low_rating_ratio'] = (business_stats['low_rating_count'] / business_stats['total_count'] * 100).round(2)
+        business_stats['high_rating_ratio'] = (business_stats['high_rating_count'] / business_stats['total_count'] * 100).round(2)
+
+        # 過濾最少樣本數 (統一使用料理的標準)
+        business_stats = business_stats[business_stats['total_count'] >= self.min_samples_dish]
+
+        logger.info(f"符合最少樣本數 ({self.min_samples_dish}) 的商業標的: {len(business_stats)} 個")
+        logger.info(f"  - 料理類型: {(business_stats['business_type'] == 'dish').sum()} 個")
+        logger.info(f"  - 店家類型: {(business_stats['business_type'] == 'vendor').sum()} 個")
+
+        # 商機分析 - 低評分數量排行榜
+        low_count_opportunities = business_stats.sort_values(
+            ['low_rating_count', 'low_rating_ratio'],
+            ascending=[False, False]
+        ).head(self.top_n)
+
+        # 商機分析 - 低評分比率排行榜
+        low_ratio_opportunities = business_stats.sort_values(
+            ['low_rating_ratio', 'low_rating_count'],
+            ascending=[False, False]
+        ).head(self.top_n)
+
+        # 競爭對手參考 - 高評分數量排行榜
+        high_count_competitors = business_stats.sort_values(
+            ['high_rating_count', 'high_rating_ratio'],
+            ascending=[False, False]
+        ).head(self.top_n)
+
+        # 競爭對手參考 - 高評分比率排行榜
+        high_ratio_competitors = business_stats.sort_values(
+            ['high_rating_ratio', 'high_rating_count'],
+            ascending=[False, False]
+        ).head(self.top_n)
+
+        return {
+            'all_stats': business_stats,
+            'low_count_opportunities': low_count_opportunities,
+            'low_ratio_opportunities': low_ratio_opportunities,
+            'high_count_competitors': high_count_competitors,
+            'high_ratio_competitors': high_ratio_competitors
+        }
+
     def analyze_dish_opportunities(self):
         """
-        分析料理商機
+        分析料理商機 (保留舊方法以維持兼容性)
 
         Returns:
             dict: 包含低評分數量、低評分比率、高評分參考的分析結果
         """
         logger.info("開始分析料理商機...")
 
+        # 過濾料理類型的資料
+        dish_dataset = self.dataset[self.dataset['business_type'] == 'dish']
+        if dish_dataset.empty:
+            logger.warning("沒有料理類型的資料")
+            return {}
+
         # 按料理分組統計
-        dish_stats = self.dataset.groupby('dish_name').agg({
+        dish_stats = dish_dataset.groupby('business_name').agg({
             'rating': ['count', 'mean', lambda x: (x <= self.low_threshold).sum(),
                       lambda x: (x >= self.high_threshold).sum()]
         }).round(2)
@@ -91,22 +157,22 @@ class OpportunityAnalyzer:
 
     def analyze_vendor_opportunities(self):
         """
-        分析店家商機
+        分析店家商機 (保留舊方法以維持兼容性)
 
         Returns:
             dict: 包含低評分數量、低評分比率、高評分參考的分析結果
         """
         logger.info("開始分析店家商機...")
 
-        # 過濾掉 vendor_name 為 None 的記錄
-        vendor_dataset = self.dataset[self.dataset['vendor_name'].notna()]
+        # 過濾店家類型的資料
+        vendor_dataset = self.dataset[self.dataset['business_type'] == 'vendor']
 
         if vendor_dataset.empty:
-            logger.warning("沒有有效的店家資料")
+            logger.warning("沒有店家類型的資料")
             return {}
 
         # 按店家分組統計
-        vendor_stats = vendor_dataset.groupby('vendor_name').agg({
+        vendor_stats = vendor_dataset.groupby('business_name').agg({
             'rating': ['count', 'mean', lambda x: (x <= self.low_threshold).sum(),
                       lambda x: (x >= self.high_threshold).sum()]
         }).round(2)
@@ -265,7 +331,7 @@ class OpportunityAnalyzer:
         }
 
         # 料理商機摘要
-        if dish_analysis and 'low_count_opportunities' in dish_analysis:
+        if dish_analysis and 'low_count_opportunities' in dish_analysis and not dish_analysis['low_count_opportunities'].empty:
             top_dish_opportunity = dish_analysis['low_count_opportunities'].iloc[0]
             summary['top_dish_opportunity'] = {
                 'name': top_dish_opportunity.name,
@@ -276,7 +342,7 @@ class OpportunityAnalyzer:
             }
 
         # 店家商機摘要
-        if vendor_analysis and 'low_count_opportunities' in vendor_analysis:
+        if vendor_analysis and 'low_count_opportunities' in vendor_analysis and not vendor_analysis['low_count_opportunities'].empty:
             top_vendor_opportunity = vendor_analysis['low_count_opportunities'].iloc[0]
             summary['top_vendor_opportunity'] = {
                 'name': top_vendor_opportunity.name,

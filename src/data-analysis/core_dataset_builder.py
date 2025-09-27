@@ -51,13 +51,15 @@ class CoreDatasetBuilder:
         JOIN review_analysis ra ON e.review_id = ra.id
         JOIN reviews r ON ra.review_id = r.id
         WHERE r.rating IS NOT NULL
-            AND e.dish_name IS NOT NULL
         ORDER BY e.id
         """
 
         try:
             self.core_dataset = self.db.execute_query(query)
             logger.info(f"核心資料集建立完成，共 {len(self.core_dataset)} 筆記錄")
+
+            # 整合商業標的資料
+            self._integrate_business_targets()
 
             # 資料品質檢查
             self._validate_dataset()
@@ -68,6 +70,31 @@ class CoreDatasetBuilder:
             logger.error(f"核心資料集建立失敗: {e}")
             raise
 
+    def _integrate_business_targets(self):
+        """整合商業標的資料，建立 business_name 和 business_type 欄位"""
+        if self.core_dataset is None or self.core_dataset.empty:
+            return
+
+        # 建立 business_name：優先使用 dish_name，如果為空則使用 vendor_name
+        self.core_dataset['business_name'] = self.core_dataset['dish_name'].fillna(self.core_dataset['vendor_name'])
+
+        # 建立 business_type：標示是料理還是店家
+        self.core_dataset['business_type'] = self.core_dataset.apply(
+            lambda row: 'dish' if pd.notna(row['dish_name']) else 'vendor', axis=1
+        )
+
+        # 過濾掉 business_name 仍為空的記錄
+        original_count = len(self.core_dataset)
+        self.core_dataset = self.core_dataset[self.core_dataset['business_name'].notna()]
+        filtered_count = len(self.core_dataset)
+
+        if original_count > filtered_count:
+            logger.info(f"過濾無效商業標的：{original_count - filtered_count} 筆記錄被移除")
+
+        logger.info(f"商業標的整合完成：{len(self.core_dataset)} 筆有效記錄")
+        logger.info(f"  - 料理類型：{(self.core_dataset['business_type'] == 'dish').sum()} 筆")
+        logger.info(f"  - 店家類型：{(self.core_dataset['business_type'] == 'vendor').sum()} 筆")
+
     def _validate_dataset(self):
         """驗證資料集品質"""
         if self.core_dataset is None:
@@ -77,7 +104,7 @@ class CoreDatasetBuilder:
         logger.info(f"資料集驗證 - 總記錄數: {total_records}")
 
         # 檢查必要欄位
-        required_columns = ['dish_name', 'rating']
+        required_columns = ['business_name', 'rating']
         missing_columns = [col for col in required_columns if col not in self.core_dataset.columns]
         if missing_columns:
             raise ValueError(f"缺少必要欄位: {missing_columns}")
@@ -111,11 +138,14 @@ class CoreDatasetBuilder:
 
         stats = {
             'total_items': len(self.core_dataset),
+            'unique_business_targets': self.core_dataset['business_name'].nunique(),
             'unique_dishes': self.core_dataset['dish_name'].nunique(),
             'unique_vendors': self.core_dataset['vendor_name'].nunique(),
+            'business_type_distribution': self.core_dataset['business_type'].value_counts().to_dict(),
             'avg_rating': self.core_dataset['rating'].mean(),
             'rating_distribution': self.core_dataset['rating'].value_counts().sort_index().to_dict(),
             'completion_rate': {
+                'business_name': (self.core_dataset['business_name'].notnull().sum() / len(self.core_dataset)) * 100,
                 'dish_name': (self.core_dataset['dish_name'].notnull().sum() / len(self.core_dataset)) * 100,
                 'vendor_name': (self.core_dataset['vendor_name'].notnull().sum() / len(self.core_dataset)) * 100,
                 'price': (self.core_dataset['price'].notnull().sum() / len(self.core_dataset)) * 100

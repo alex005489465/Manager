@@ -98,47 +98,78 @@ class BusinessOpportunityAnalysis:
         try:
             analyzer = OpportunityAnalyzer(dataset)
 
-            # 分析料理商機
-            logger.info("分析料理商機...")
+            # 進行統一商機分析
+            logger.info("分析統一商機...")
+            business_analysis = analyzer.analyze_business_opportunities()
+
+            if business_analysis and 'low_count_opportunities' in business_analysis:
+                top_business = business_analysis['low_count_opportunities'].iloc[0]
+                business_type = "料理" if top_business['business_type'] == 'dish' else "店家"
+                logger.info(f"  ✓ 最大商機 ({business_type}): {top_business.name} " +
+                          f"({int(top_business['low_rating_count'])} 個低評分, " +
+                          f"{top_business['low_rating_ratio']:.1f}% 低評分率)")
+
+            # 為了向後兼容，同時進行分離分析
             dish_analysis = analyzer.analyze_dish_opportunities()
-
-            if dish_analysis and 'low_count_opportunities' in dish_analysis:
-                top_dish = dish_analysis['low_count_opportunities'].iloc[0]
-                logger.info(f"  ✓ 最大料理商機: {top_dish.name} " +
-                          f"({int(top_dish['low_rating_count'])} 個低評分, " +
-                          f"{top_dish['low_rating_ratio']:.1f}% 低評分率)")
-
-            # 分析店家商機
-            logger.info("分析店家商機...")
             vendor_analysis = analyzer.analyze_vendor_opportunities()
 
-            if vendor_analysis and 'low_count_opportunities' in vendor_analysis:
-                top_vendor = vendor_analysis['low_count_opportunities'].iloc[0]
-                logger.info(f"  ✓ 最大店家商機: {top_vendor.name} " +
-                          f"({int(top_vendor['low_rating_count'])} 個低評分, " +
-                          f"{top_vendor['low_rating_ratio']:.1f}% 低評分率)")
-
-            # 匯出分析結果
-            analyzer.export_opportunities(dish_analysis, vendor_analysis)
+            # 匯出分析結果 (使用新的統一分析結果)
+            self._export_business_opportunities(analyzer, business_analysis)
 
             # 生成摘要報告
             summary = analyzer.generate_summary_report(dish_analysis, vendor_analysis)
             self.results['analysis_summary'] = summary
+            self.results['business_analysis'] = business_analysis
 
             logger.info("✓ 商機分析完成")
 
-            return dish_analysis, vendor_analysis
+            return business_analysis, dish_analysis, vendor_analysis
 
         except Exception as e:
             logger.error(f"✗ 商機分析失敗: {e}")
-            return None, None
+            return None, None, None
 
-    def generate_visualizations(self, dataset, dish_analysis, vendor_analysis):
+    def _export_business_opportunities(self, analyzer, business_analysis):
+        """匯出統一商機分析結果"""
+        if not business_analysis:
+            return
+
+        output_dir = ANALYSIS_CONFIG['data_dir']
+        os.makedirs(output_dir, exist_ok=True)
+
+        try:
+            # 匯出統一商機分析結果
+            business_analysis['low_count_opportunities'].to_csv(
+                os.path.join(output_dir, 'business_low_count_opportunities.csv'),
+                encoding='utf-8-sig'
+            )
+
+            business_analysis['low_ratio_opportunities'].to_csv(
+                os.path.join(output_dir, 'business_low_ratio_opportunities.csv'),
+                encoding='utf-8-sig'
+            )
+
+            business_analysis['high_count_competitors'].to_csv(
+                os.path.join(output_dir, 'business_high_count_competitors.csv'),
+                encoding='utf-8-sig'
+            )
+
+            logger.info("統一商機分析結果已匯出")
+
+        except Exception as e:
+            logger.error(f"匯出統一商機分析結果失敗: {e}")
+
+    def generate_visualizations(self, dataset, business_analysis, dish_analysis=None, vendor_analysis=None):
         """生成視覺化圖表"""
         logger.info("步驟 3: 生成視覺化圖表...")
         try:
             visualizer = BusinessOpportunityVisualizer()
-            visualizer.generate_all_opportunity_charts(dish_analysis, vendor_analysis, dataset)
+            visualizer.generate_all_opportunity_charts(
+                business_analysis=business_analysis,
+                dish_analysis=dish_analysis,
+                vendor_analysis=vendor_analysis,
+                dataset=dataset
+            )
 
             logger.info("✓ 視覺化圖表生成完成")
             logger.info(f"  - 圖表儲存位置: {ANALYSIS_CONFIG['charts_dir']}")
@@ -277,13 +308,13 @@ class BusinessOpportunityAnalysis:
                 return False
 
             # 進行商機分析
-            dish_analysis, vendor_analysis = self.analyze_opportunities(dataset)
-            if dish_analysis is None and vendor_analysis is None:
+            business_analysis, dish_analysis, vendor_analysis = self.analyze_opportunities(dataset)
+            if business_analysis is None:
                 logger.error("商機分析失敗，無法繼續")
                 return False
 
             # 生成視覺化圖表
-            self.generate_visualizations(dataset, dish_analysis, vendor_analysis)
+            self.generate_visualizations(dataset, business_analysis, dish_analysis, vendor_analysis)
 
             # 生成摘要報告
             self.generate_summary_report()
