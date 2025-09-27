@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-核心資料集建立模組
+資料集建立模組
 
 負責執行多表關聯查詢，建立包含 extracted_food_items + reviews.rating 的核心分析資料集
 """
 
 import pandas as pd
 import logging
-from database_connector import get_db_connector
-from config import ANALYSIS_CONFIG
 import os
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+from config import ANALYSIS_CONFIG
+from data.connectors.database_connector import get_db_connector
 
 # 設定日誌
 logger = logging.getLogger(__name__)
 
 
-class CoreDatasetBuilder:
-    """核心資料集建立器"""
+class DatasetBuilder:
+    """資料集建立器"""
 
     def __init__(self):
         """初始化資料集建立器"""
         self.db = get_db_connector()
-        self.core_dataset = None
+        self.dataset = None
 
     def build_core_dataset(self):
         """
@@ -55,8 +59,8 @@ class CoreDatasetBuilder:
         """
 
         try:
-            self.core_dataset = self.db.execute_query(query)
-            logger.info(f"核心資料集建立完成，共 {len(self.core_dataset)} 筆記錄")
+            self.dataset = self.db.execute_query(query)
+            logger.info(f"核心資料集建立完成，共 {len(self.dataset)} 筆記錄")
 
             # 整合商業標的資料
             self._integrate_business_targets()
@@ -64,7 +68,7 @@ class CoreDatasetBuilder:
             # 資料品質檢查
             self._validate_dataset()
 
-            return self.core_dataset
+            return self.dataset
 
         except Exception as e:
             logger.error(f"核心資料集建立失敗: {e}")
@@ -72,54 +76,54 @@ class CoreDatasetBuilder:
 
     def _integrate_business_targets(self):
         """整合商業標的資料，建立 business_name 和 business_type 欄位"""
-        if self.core_dataset is None or self.core_dataset.empty:
+        if self.dataset is None or self.dataset.empty:
             return
 
         # 建立 business_name：優先使用 dish_name，如果為空則使用 vendor_name
-        self.core_dataset['business_name'] = self.core_dataset['dish_name'].fillna(self.core_dataset['vendor_name'])
+        self.dataset['business_name'] = self.dataset['dish_name'].fillna(self.dataset['vendor_name'])
 
         # 建立 business_type：標示是料理還是店家
-        self.core_dataset['business_type'] = self.core_dataset.apply(
+        self.dataset['business_type'] = self.dataset.apply(
             lambda row: 'dish' if pd.notna(row['dish_name']) else 'vendor', axis=1
         )
 
         # 過濾掉 business_name 仍為空的記錄
-        original_count = len(self.core_dataset)
-        self.core_dataset = self.core_dataset[self.core_dataset['business_name'].notna()]
-        filtered_count = len(self.core_dataset)
+        original_count = len(self.dataset)
+        self.dataset = self.dataset[self.dataset['business_name'].notna()]
+        filtered_count = len(self.dataset)
 
         if original_count > filtered_count:
             logger.info(f"過濾無效商業標的：{original_count - filtered_count} 筆記錄被移除")
 
-        logger.info(f"商業標的整合完成：{len(self.core_dataset)} 筆有效記錄")
-        logger.info(f"  - 料理類型：{(self.core_dataset['business_type'] == 'dish').sum()} 筆")
-        logger.info(f"  - 店家類型：{(self.core_dataset['business_type'] == 'vendor').sum()} 筆")
+        logger.info(f"商業標的整合完成：{len(self.dataset)} 筆有效記錄")
+        logger.info(f"  - 料理類型：{(self.dataset['business_type'] == 'dish').sum()} 筆")
+        logger.info(f"  - 店家類型：{(self.dataset['business_type'] == 'vendor').sum()} 筆")
 
     def _validate_dataset(self):
         """驗證資料集品質"""
-        if self.core_dataset is None:
+        if self.dataset is None:
             raise ValueError("資料集尚未建立")
 
-        total_records = len(self.core_dataset)
+        total_records = len(self.dataset)
         logger.info(f"資料集驗證 - 總記錄數: {total_records}")
 
         # 檢查必要欄位
         required_columns = ['business_name', 'rating']
-        missing_columns = [col for col in required_columns if col not in self.core_dataset.columns]
+        missing_columns = [col for col in required_columns if col not in self.dataset.columns]
         if missing_columns:
             raise ValueError(f"缺少必要欄位: {missing_columns}")
 
         # 檢查評分範圍
-        invalid_ratings = self.core_dataset[
-            (self.core_dataset['rating'] < 1) | (self.core_dataset['rating'] > 5)
+        invalid_ratings = self.dataset[
+            (self.dataset['rating'] < 1) | (self.dataset['rating'] > 5)
         ]
         if not invalid_ratings.empty:
             logger.warning(f"發現 {len(invalid_ratings)} 筆評分超出範圍 (1-5) 的記錄")
 
         # 統計資料完整度
-        dish_null_count = self.core_dataset['dish_name'].isnull().sum()
-        vendor_null_count = self.core_dataset['vendor_name'].isnull().sum()
-        price_null_count = self.core_dataset['price'].isnull().sum()
+        dish_null_count = self.dataset['dish_name'].isnull().sum()
+        vendor_null_count = self.dataset['vendor_name'].isnull().sum()
+        price_null_count = self.dataset['price'].isnull().sum()
 
         logger.info(f"資料完整度:")
         logger.info(f"  - 料理名稱缺失: {dish_null_count} 筆 ({dish_null_count/total_records*100:.1f}%)")
@@ -133,22 +137,22 @@ class CoreDatasetBuilder:
         Returns:
             dict: 統計資訊
         """
-        if self.core_dataset is None:
+        if self.dataset is None:
             raise ValueError("資料集尚未建立")
 
         stats = {
-            'total_items': len(self.core_dataset),
-            'unique_business_targets': self.core_dataset['business_name'].nunique(),
-            'unique_dishes': self.core_dataset['dish_name'].nunique(),
-            'unique_vendors': self.core_dataset['vendor_name'].nunique(),
-            'business_type_distribution': self.core_dataset['business_type'].value_counts().to_dict(),
-            'avg_rating': self.core_dataset['rating'].mean(),
-            'rating_distribution': self.core_dataset['rating'].value_counts().sort_index().to_dict(),
+            'total_items': len(self.dataset),
+            'unique_business_targets': self.dataset['business_name'].nunique(),
+            'unique_dishes': self.dataset['dish_name'].nunique(),
+            'unique_vendors': self.dataset['vendor_name'].nunique(),
+            'business_type_distribution': self.dataset['business_type'].value_counts().to_dict(),
+            'avg_rating': self.dataset['rating'].mean(),
+            'rating_distribution': self.dataset['rating'].value_counts().sort_index().to_dict(),
             'completion_rate': {
-                'business_name': (self.core_dataset['business_name'].notnull().sum() / len(self.core_dataset)) * 100,
-                'dish_name': (self.core_dataset['dish_name'].notnull().sum() / len(self.core_dataset)) * 100,
-                'vendor_name': (self.core_dataset['vendor_name'].notnull().sum() / len(self.core_dataset)) * 100,
-                'price': (self.core_dataset['price'].notnull().sum() / len(self.core_dataset)) * 100
+                'business_name': (self.dataset['business_name'].notnull().sum() / len(self.dataset)) * 100,
+                'dish_name': (self.dataset['dish_name'].notnull().sum() / len(self.dataset)) * 100,
+                'vendor_name': (self.dataset['vendor_name'].notnull().sum() / len(self.dataset)) * 100,
+                'price': (self.dataset['price'].notnull().sum() / len(self.dataset)) * 100
             }
         }
 
@@ -160,15 +164,18 @@ class CoreDatasetBuilder:
 
         Args:
             filename (str): 檔案名稱
+
+        Returns:
+            str: 匯出檔案路徑
         """
-        if self.core_dataset is None:
+        if self.dataset is None:
             raise ValueError("資料集尚未建立")
 
         # 確保輸出目錄存在
         output_path = os.path.join(ANALYSIS_CONFIG['data_dir'], filename)
         os.makedirs(ANALYSIS_CONFIG['data_dir'], exist_ok=True)
 
-        self.core_dataset.to_csv(output_path, index=False, encoding='utf-8-sig')
+        self.dataset.to_csv(output_path, index=False, encoding='utf-8-sig')
         logger.info(f"核心資料集已匯出至: {output_path}")
 
         return output_path
@@ -180,7 +187,7 @@ class CoreDatasetBuilder:
         Returns:
             pd.DataFrame: 核心資料集
         """
-        return self.core_dataset
+        return self.dataset
 
     def filter_by_min_samples(self, column, min_samples):
         """
@@ -193,26 +200,30 @@ class CoreDatasetBuilder:
         Returns:
             pd.DataFrame: 過濾後的資料集
         """
-        if self.core_dataset is None:
+        if self.dataset is None:
             raise ValueError("資料集尚未建立")
 
         # 計算每個項目的樣本數
-        item_counts = self.core_dataset[column].value_counts()
+        item_counts = self.dataset[column].value_counts()
         valid_items = item_counts[item_counts >= min_samples].index
 
         # 過濾資料集
-        filtered_dataset = self.core_dataset[self.core_dataset[column].isin(valid_items)]
+        filtered_dataset = self.dataset[self.dataset[column].isin(valid_items)]
 
         logger.info(f"按 {column} 過濾 (最少 {min_samples} 樣本): {len(filtered_dataset)} 筆記錄")
 
         return filtered_dataset
 
 
-if __name__ == "__main__":
-    # 測試核心資料集建立
-    print("測試核心資料集建立...")
+# 保持向後兼容性的別名
+CoreDatasetBuilder = DatasetBuilder
 
-    builder = CoreDatasetBuilder()
+
+if __name__ == "__main__":
+    # 測試資料集建立
+    print("測試資料集建立...")
+
+    builder = DatasetBuilder()
 
     try:
         # 建立核心資料集
@@ -234,5 +245,5 @@ if __name__ == "__main__":
         print(dataset.head().to_string())
 
     except Exception as e:
-        print(f">> 核心資料集建立失敗: {e}")
+        print(f">> 資料集建立失敗: {e}")
         logger.error(f"測試失敗: {e}", exc_info=True)

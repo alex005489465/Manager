@@ -10,6 +10,10 @@ import mysql.connector
 import pandas as pd
 from contextlib import contextmanager
 import logging
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
 from config import DATABASE_CONFIG, QUERY_CONFIG
 
 # 設定日誌

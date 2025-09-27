@@ -8,29 +8,38 @@
 
 import pandas as pd
 import logging
-from config import ANALYSIS_CONFIG
 import os
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+from analysis.analyzers.base_analyzer import BaseAnalyzer
+from config import ANALYSIS_CONFIG
 
 # 設定日誌
 logger = logging.getLogger(__name__)
 
 
-class OpportunityAnalyzer:
+class OpportunityAnalyzer(BaseAnalyzer):
     """商機分析器"""
 
-    def __init__(self, core_dataset):
+    def __init__(self, dataset):
         """
         初始化商機分析器
 
         Args:
-            core_dataset (pd.DataFrame): 核心資料集
+            dataset (pd.DataFrame): 核心資料集
         """
-        self.dataset = core_dataset
-        self.low_threshold = ANALYSIS_CONFIG['low_rating_threshold']
-        self.high_threshold = ANALYSIS_CONFIG['high_rating_threshold']
-        self.min_samples_dish = ANALYSIS_CONFIG['min_samples_dish']
-        self.min_samples_vendor = ANALYSIS_CONFIG['min_samples_vendor']
-        self.top_n = ANALYSIS_CONFIG['top_n_items']
+        super().__init__(dataset)
+
+    def analyze(self):
+        """
+        執行完整的商機分析
+
+        Returns:
+            dict: 分析結果
+        """
+        return self.analyze_business_opportunities()
 
     def analyze_business_opportunities(self):
         """
@@ -54,35 +63,39 @@ class OpportunityAnalyzer:
         business_stats['high_rating_ratio'] = (business_stats['high_rating_count'] / business_stats['total_count'] * 100).round(2)
 
         # 過濾最少樣本數 (統一使用料理的標準)
-        business_stats = business_stats[business_stats['total_count'] >= self.min_samples_dish]
+        business_stats = self.filter_by_min_samples(business_stats, self.min_samples_dish)
 
         logger.info(f"符合最少樣本數 ({self.min_samples_dish}) 的商業標的: {len(business_stats)} 個")
         logger.info(f"  - 料理類型: {(business_stats['business_type'] == 'dish').sum()} 個")
         logger.info(f"  - 店家類型: {(business_stats['business_type'] == 'vendor').sum()} 個")
 
         # 商機分析 - 低評分數量排行榜
-        low_count_opportunities = business_stats.sort_values(
+        low_count_opportunities = self.get_top_n_items(
+            business_stats,
             ['low_rating_count', 'low_rating_ratio'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         # 商機分析 - 低評分比率排行榜
-        low_ratio_opportunities = business_stats.sort_values(
+        low_ratio_opportunities = self.get_top_n_items(
+            business_stats,
             ['low_rating_ratio', 'low_rating_count'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         # 競爭對手參考 - 高評分數量排行榜
-        high_count_competitors = business_stats.sort_values(
+        high_count_competitors = self.get_top_n_items(
+            business_stats,
             ['high_rating_count', 'high_rating_ratio'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         # 競爭對手參考 - 高評分比率排行榜
-        high_ratio_competitors = business_stats.sort_values(
+        high_ratio_competitors = self.get_top_n_items(
+            business_stats,
             ['high_rating_ratio', 'high_rating_count'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         return {
             'all_stats': business_stats,
@@ -108,44 +121,43 @@ class OpportunityAnalyzer:
             return {}
 
         # 按料理分組統計
-        dish_stats = dish_dataset.groupby('business_name').agg({
-            'rating': ['count', 'mean', lambda x: (x <= self.low_threshold).sum(),
-                      lambda x: (x >= self.high_threshold).sum()]
-        }).round(2)
+        dish_stats = self.calculate_rating_statistics('business_name')
 
-        # 重新命名欄位
-        dish_stats.columns = ['total_count', 'avg_rating', 'low_rating_count', 'high_rating_count']
-        dish_stats['low_rating_ratio'] = (dish_stats['low_rating_count'] / dish_stats['total_count'] * 100).round(2)
-        dish_stats['high_rating_ratio'] = (dish_stats['high_rating_count'] / dish_stats['total_count'] * 100).round(2)
+        # 只保留料理類型
+        dish_stats = dish_stats[dish_stats.index.isin(dish_dataset['business_name'].unique())]
 
         # 過濾最少樣本數
-        dish_stats = dish_stats[dish_stats['total_count'] >= self.min_samples_dish]
+        dish_stats = self.filter_by_min_samples(dish_stats, self.min_samples_dish)
 
         logger.info(f"符合最少樣本數 ({self.min_samples_dish}) 的料理: {len(dish_stats)} 種")
 
         # 商機分析 - 低評分數量排行榜
-        low_count_opportunities = dish_stats.sort_values(
+        low_count_opportunities = self.get_top_n_items(
+            dish_stats,
             ['low_rating_count', 'low_rating_ratio'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         # 商機分析 - 低評分比率排行榜
-        low_ratio_opportunities = dish_stats.sort_values(
+        low_ratio_opportunities = self.get_top_n_items(
+            dish_stats,
             ['low_rating_ratio', 'low_rating_count'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         # 競爭對手參考 - 高評分數量排行榜
-        high_count_competitors = dish_stats.sort_values(
+        high_count_competitors = self.get_top_n_items(
+            dish_stats,
             ['high_rating_count', 'high_rating_ratio'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         # 競爭對手參考 - 高評分比率排行榜
-        high_ratio_competitors = dish_stats.sort_values(
+        high_ratio_competitors = self.get_top_n_items(
+            dish_stats,
             ['high_rating_ratio', 'high_rating_count'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         return {
             'all_stats': dish_stats,
@@ -172,44 +184,43 @@ class OpportunityAnalyzer:
             return {}
 
         # 按店家分組統計
-        vendor_stats = vendor_dataset.groupby('business_name').agg({
-            'rating': ['count', 'mean', lambda x: (x <= self.low_threshold).sum(),
-                      lambda x: (x >= self.high_threshold).sum()]
-        }).round(2)
+        vendor_stats = self.calculate_rating_statistics('business_name')
 
-        # 重新命名欄位
-        vendor_stats.columns = ['total_count', 'avg_rating', 'low_rating_count', 'high_rating_count']
-        vendor_stats['low_rating_ratio'] = (vendor_stats['low_rating_count'] / vendor_stats['total_count'] * 100).round(2)
-        vendor_stats['high_rating_ratio'] = (vendor_stats['high_rating_count'] / vendor_stats['total_count'] * 100).round(2)
+        # 只保留店家類型
+        vendor_stats = vendor_stats[vendor_stats.index.isin(vendor_dataset['business_name'].unique())]
 
         # 過濾最少樣本數
-        vendor_stats = vendor_stats[vendor_stats['total_count'] >= self.min_samples_vendor]
+        vendor_stats = self.filter_by_min_samples(vendor_stats, self.min_samples_vendor)
 
         logger.info(f"符合最少樣本數 ({self.min_samples_vendor}) 的店家: {len(vendor_stats)} 家")
 
         # 商機分析 - 低評分數量排行榜
-        low_count_opportunities = vendor_stats.sort_values(
+        low_count_opportunities = self.get_top_n_items(
+            vendor_stats,
             ['low_rating_count', 'low_rating_ratio'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         # 商機分析 - 低評分比率排行榜
-        low_ratio_opportunities = vendor_stats.sort_values(
+        low_ratio_opportunities = self.get_top_n_items(
+            vendor_stats,
             ['low_rating_ratio', 'low_rating_count'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         # 競爭對手參考 - 高評分數量排行榜
-        high_count_competitors = vendor_stats.sort_values(
+        high_count_competitors = self.get_top_n_items(
+            vendor_stats,
             ['high_rating_count', 'high_rating_ratio'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         # 競爭對手參考 - 高評分比率排行榜
-        high_ratio_competitors = vendor_stats.sort_values(
+        high_ratio_competitors = self.get_top_n_items(
+            vendor_stats,
             ['high_rating_ratio', 'high_rating_count'],
-            ascending=[False, False]
-        ).head(self.top_n)
+            [False, False]
+        )
 
         return {
             'all_stats': vendor_stats,
@@ -219,47 +230,58 @@ class OpportunityAnalyzer:
             'high_ratio_competitors': high_ratio_competitors
         }
 
-    def calculate_opportunity_score(self, stats_df):
-        """
-        計算商機綜合指數
-
-        Args:
-            stats_df (pd.DataFrame): 統計資料
-
-        Returns:
-            pd.DataFrame: 包含商機指數的資料
-        """
-        # 正規化低評分數量和比率 (0-1)
-        max_count = stats_df['low_rating_count'].max()
-        max_ratio = stats_df['low_rating_ratio'].max()
-
-        if max_count > 0:
-            stats_df['normalized_count'] = stats_df['low_rating_count'] / max_count
-        else:
-            stats_df['normalized_count'] = 0
-
-        if max_ratio > 0:
-            stats_df['normalized_ratio'] = stats_df['low_rating_ratio'] / max_ratio
-        else:
-            stats_df['normalized_ratio'] = 0
-
-        # 商機指數 = 低評分數量 * 低評分比率 (權重各 50%)
-        stats_df['opportunity_score'] = (
-            stats_df['normalized_count'] * 0.5 +
-            stats_df['normalized_ratio'] * 0.5
-        ).round(3)
-
-        return stats_df.sort_values('opportunity_score', ascending=False)
-
-    def export_opportunities(self, dish_analysis, vendor_analysis):
+    def export_results(self, output_dir=None):
         """
         匯出商機分析結果
 
         Args:
+            output_dir (str): 輸出目錄，預設使用配置中的目錄
+        """
+        if output_dir is None:
+            output_dir = ANALYSIS_CONFIG['data_dir']
+
+        os.makedirs(output_dir, exist_ok=True)
+
+        # 執行統一商機分析
+        business_analysis = self.analyze_business_opportunities()
+
+        if business_analysis:
+            # 匯出統一商機分析結果
+            business_analysis['low_count_opportunities'].to_csv(
+                os.path.join(output_dir, 'business_low_count_opportunities.csv'),
+                encoding='utf-8-sig'
+            )
+
+            business_analysis['low_ratio_opportunities'].to_csv(
+                os.path.join(output_dir, 'business_low_ratio_opportunities.csv'),
+                encoding='utf-8-sig'
+            )
+
+            business_analysis['high_count_competitors'].to_csv(
+                os.path.join(output_dir, 'business_high_count_competitors.csv'),
+                encoding='utf-8-sig'
+            )
+
+            logger.info("統一商機分析結果已匯出")
+
+        # 為了向後兼容，同時匯出分離的分析結果
+        dish_analysis = self.analyze_dish_opportunities()
+        vendor_analysis = self.analyze_vendor_opportunities()
+
+        self.export_opportunities(dish_analysis, vendor_analysis, output_dir)
+
+    def export_opportunities(self, dish_analysis, vendor_analysis, output_dir=None):
+        """
+        匯出分離的商機分析結果（向後兼容）
+
+        Args:
             dish_analysis (dict): 料理分析結果
             vendor_analysis (dict): 店家分析結果
+            output_dir (str): 輸出目錄
         """
-        output_dir = ANALYSIS_CONFIG['data_dir']
+        if output_dir is None:
+            output_dir = ANALYSIS_CONFIG['data_dir']
+
         os.makedirs(output_dir, exist_ok=True)
 
         # 匯出料理商機
@@ -306,7 +328,7 @@ class OpportunityAnalyzer:
 
             logger.info("店家商機分析結果已匯出")
 
-    def generate_summary_report(self, dish_analysis, vendor_analysis):
+    def generate_summary_report(self, dish_analysis=None, vendor_analysis=None):
         """
         生成商機摘要報告
 
@@ -317,6 +339,11 @@ class OpportunityAnalyzer:
         Returns:
             dict: 摘要報告
         """
+        if dish_analysis is None:
+            dish_analysis = self.analyze_dish_opportunities()
+        if vendor_analysis is None:
+            vendor_analysis = self.analyze_vendor_opportunities()
+
         summary = {
             'analysis_summary': {
                 'total_dishes_analyzed': len(dish_analysis.get('all_stats', [])) if dish_analysis else 0,
@@ -359,32 +386,43 @@ if __name__ == "__main__":
     # 測試商機分析
     print("測試商機分析...")
 
-    # 模擬核心資料集（實際使用時從 core_dataset_builder 取得）
-    from core_dataset_builder import CoreDatasetBuilder
-
+    # 模擬核心資料集（實際使用時從 data.builders 取得）
     try:
+        from ...data.builders.dataset_builder import DatasetBuilder
+
         # 建立核心資料集
-        builder = CoreDatasetBuilder()
+        builder = DatasetBuilder()
         dataset = builder.build_core_dataset()
 
         # 初始化商機分析器
         analyzer = OpportunityAnalyzer(dataset)
 
+        # 分析統一商機
+        business_analysis = analyzer.analyze_business_opportunities()
+        print(f">> 統一商機分析完成")
+
+        if business_analysis['low_count_opportunities'].size > 0:
+            top_business = business_analysis['low_count_opportunities'].iloc[0]
+            print(f"   低評分數量 TOP1: {top_business.name} " +
+                  f"({top_business['low_rating_count']} 個低評分)")
+
         # 分析料理商機
         dish_analysis = analyzer.analyze_dish_opportunities()
         print(f">> 料理商機分析完成")
-        print(f"   低評分數量 TOP1: {dish_analysis['low_count_opportunities'].index[0]} " +
-              f"({dish_analysis['low_count_opportunities'].iloc[0]['low_rating_count']} 個低評分)")
+
+        if dish_analysis and dish_analysis['low_count_opportunities'].size > 0:
+            print(f"   低評分數量 TOP1: {dish_analysis['low_count_opportunities'].index[0]} " +
+                  f"({dish_analysis['low_count_opportunities'].iloc[0]['low_rating_count']} 個低評分)")
 
         # 分析店家商機
         vendor_analysis = analyzer.analyze_vendor_opportunities()
-        if vendor_analysis:
+        if vendor_analysis and vendor_analysis['low_count_opportunities'].size > 0:
             print(f">> 店家商機分析完成")
             print(f"   低評分數量 TOP1: {vendor_analysis['low_count_opportunities'].index[0]} " +
                   f"({vendor_analysis['low_count_opportunities'].iloc[0]['low_rating_count']} 個低評分)")
 
         # 匯出結果
-        analyzer.export_opportunities(dish_analysis, vendor_analysis)
+        analyzer.export_results()
         print(">> 商機分析結果已匯出")
 
         # 生成摘要報告
