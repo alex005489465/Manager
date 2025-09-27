@@ -8,6 +8,7 @@ infra/prod/backend-service/volume/
 *.log
 infra/prod/backend-service/java
 output/
+results/
 *.ttc
 **/*.ttc
 

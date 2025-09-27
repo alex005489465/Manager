@@ -1,9 +1,6 @@
-version: '3.8'
-
 services:
   sysbench:
     image: ${SYSBENCH_IMAGE}
-    platform: linux/arm64
     container_name: ${SYSBENCH_CONTAINER}
     restart: unless-stopped
     working_dir: ${WORKING_DIR}
@@ -26,14 +23,16 @@ services:
       - mysql-client
     command: >
       sh -c "
-      echo 'sysbench測試容器已啟動，等待手動執行測試腳本...' &&
-      echo '執行測試請使用: docker exec -it ${SYSBENCH_CONTAINER} ${WORKING_DIR}/scripts/three-tier-test.sh' &&
+      echo 'sysbench測試容器啟動中，安裝工具...' &&
+      apt-get update &&
+      apt-get install -y sysbench mysql-client &&
+      echo 'sysbench 和 mysql-client 安裝完成！' &&
+      echo '執行測試請使用: docker exec -it sysbench-test /app/scripts/three-tier-test.sh' &&
       tail -f /dev/null
       "
 
   mysql-client:
     image: ${MYSQL_CLIENT_IMAGE}
-    platform: linux/arm64
     container_name: ${MYSQL_CLIENT_CONTAINER}
     restart: unless-stopped
     volumes:

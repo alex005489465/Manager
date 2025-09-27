@@ -7,9 +7,9 @@ port = 3306
 bind-address = 0.0.0.0
 socket = /tmp/mysql.sock
 
-# 記憶體配置 - 大Buffer Pool用於CPU測試
-innodb_buffer_pool_size = 6G
-innodb_buffer_pool_instances = 4
+# 記憶體配置 - 調整為適合系統的配置
+innodb_buffer_pool_size = 1G
+innodb_buffer_pool_instances = 2
 
 # 連接設定
 max_connections = 500
@@ -25,14 +25,15 @@ innodb_write_io_threads = 8
 innodb_io_capacity = 2000
 innodb_io_capacity_max = 4000
 
-# 查詢快取 - 關閉避免干擾測試
-query_cache_type = 0
-query_cache_size = 0
+# 禁用 binlog - 測試環境不需要，節省磁盤空間
+skip-log-bin
+
+# MySQL 8.0 已移除 query cache，不需要這些配置
 
 # 日誌設定
-log-error = /var/log/mysql/error.log
+# log-error = /var/log/mysql/error.log  # 暫時禁用，使用默認路徑
 slow_query_log = 1
-slow_query_log_file = /var/log/mysql/slow.log
+# slow_query_log_file = /var/log/mysql/slow.log  # 暫時禁用，使用默認路徑
 long_query_time = 2
 
 # 其他優化

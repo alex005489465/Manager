@@ -54,7 +54,7 @@ TEST_DURATION="${TEST_DURATION:-180}"
 # 測試資料配置
 CPU_TABLE_SIZE=100000      # 10萬筆記錄 (~20MB)
 MEMORY_TABLE_SIZE=5000000  # 500萬筆記錄 (~1GB)
-DISK_TABLE_SIZE=50000000   # 5000萬筆記錄 (~10GB)
+DISK_TABLE_SIZE=10000000   # 1000萬筆記錄 (~2GB)
 
 # 結果目錄
 RESULTS_DIR="/app/results"
@@ -95,6 +95,52 @@ check_mysql_connection() {
     fi
 }
 
+# 檢查表大小的函數
+check_table_size() {
+    local host=$1
+    local port=$2
+    local database=$3
+    local test_type=$4
+
+    log_info "檢查 $test_type 測試表大小..."
+
+    local size_info=$(mysql -h"$host" -P"$port" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$database" -e "
+        SELECT 
+            TABLE_NAME,
+            TABLE_ROWS,
+            ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2) AS SIZE_MB,
+            ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024 / 1024, 2) AS SIZE_GB
+        FROM information_schema.TABLES 
+        WHERE TABLE_SCHEMA = '$database' AND TABLE_NAME = 'sbtest1';
+    " 2>/dev/null)
+
+    if [ -n "$size_info" ] && [[ "$size_info" != *"Empty set"* ]]; then
+        echo "$size_info" | while read -r line; do
+            if [[ "$line" != *"TABLE_NAME"* ]]; then
+                log_success "$test_type 測試表資訊: $line"
+            fi
+        done
+    else
+        log_warning "$test_type 測試表不存在或為空"
+    fi
+}
+
+# 獲取表大小資訊用於記錄到文件的函數
+get_table_size_info() {
+    local host=$1
+    local port=$2
+    local database=$3
+
+    mysql -h"$host" -P"$port" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$database" -e "
+        SELECT 
+            CONCAT('表名: ', TABLE_NAME),
+            CONCAT('記錄數: ', FORMAT(TABLE_ROWS, 0)),
+            CONCAT('資料大小: ', ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024, 2), ' MB (', ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024 / 1024, 3), ' GB)')
+        FROM information_schema.TABLES 
+        WHERE TABLE_SCHEMA = '$database' AND TABLE_NAME = 'sbtest1';
+    " 2>/dev/null | tail -n +2 | tr '\t' '\n'
+}
+
 # 準備測試資料的函數
 prepare_test_data() {
     local host=$1
@@ -125,6 +171,9 @@ prepare_test_data() {
 
     if [ $? -eq 0 ]; then
         log_success "$test_type 測試資料準備完成"
+        
+        # 檢查插入的資料表大小
+        check_table_size "$host" "$port" "$database" "$test_type"
     else
         log_error "$test_type 測試資料準備失敗"
         return 1
@@ -156,6 +205,10 @@ run_single_test() {
         echo "測試時長: $TEST_DURATION 秒"
         echo "目標主機: ${host}:${port}"
         echo "測試資料庫: $database"
+        echo "=================================="
+        echo
+        echo "測試資料表資訊:"
+        get_table_size_info "$host" "$port" "$database"
         echo "=================================="
         echo
 

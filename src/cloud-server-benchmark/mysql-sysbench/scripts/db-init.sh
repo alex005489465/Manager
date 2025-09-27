@@ -118,12 +118,11 @@ test_connection() {
     log_info "測試 $test_type 資料庫連接..."
 
     mysql -h"$host" -P"$port" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$database" -e "
-        SELECT
-            CONNECTION_ID() as connection_id,
-            USER() as current_user,
-            DATABASE() as current_database,
-            VERSION() as mysql_version,
-            NOW() as current_time;
+        SELECT 
+            '$test_type 資料庫連接成功' AS status,
+            DATABASE() AS db_name,
+            USER() AS user_info,
+            VERSION() AS mysql_ver;
     "
 
     if [ $? -eq 0 ]; then
