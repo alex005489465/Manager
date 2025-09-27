@@ -25,6 +25,9 @@ import warnings
 warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
 warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib.font_manager')
 
+# 導入字體管理模組
+import matplotlib.font_manager as fm
+
 
 class BaseChart(ABC):
     """基礎圖表抽象類別"""
@@ -45,11 +48,37 @@ class BaseChart(ABC):
         sns.set_palette(CHART_CONFIG['color_palette'])
 
         # 重新設定中文字體（必須在 plt.style.use 之後）
-        matplotlib.rcParams['font.sans-serif'] = ['Noto Sans TC', 'Noto Sans HK', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei']
-        matplotlib.rcParams['font.family'] = 'sans-serif'
+        self._setup_chinese_font()
         matplotlib.rcParams['axes.unicode_minus'] = False
 
-        logger.info(f"重新設定中文字體: {matplotlib.rcParams['font.sans-serif'][0]}")
+    def _setup_chinese_font(self):
+        """設定中文字體，僅使用專案內字體檔案"""
+        # 計算字體檔案路徑
+        font_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'fonts')
+        font_path = os.path.join(font_dir, 'NotoSansCJK-Regular.ttc')
+
+        # 檢查字體檔案是否存在
+        if not os.path.exists(font_path):
+            raise FileNotFoundError(f"專案字體檔案不存在: {font_path}")
+
+        # 註冊專案內字體
+        try:
+            fm.fontManager.addfont(font_path)
+        except Exception as e:
+            raise RuntimeError(f"無法註冊專案字體檔案 {font_path}: {e}")
+
+        # 取得字體屬性
+        try:
+            font_prop = fm.FontProperties(fname=font_path)
+            font_name = font_prop.get_name()
+        except Exception as e:
+            raise RuntimeError(f"無法讀取字體屬性 {font_path}: {e}")
+
+        # 僅設定專案字體
+        matplotlib.rcParams['font.sans-serif'] = [font_name]
+        matplotlib.rcParams['font.family'] = 'sans-serif'
+
+        logger.info(f"專案字體設定成功: {font_name} (來源: {font_path})")
 
     def save_chart(self, filename, dpi=None, bbox_inches='tight'):
         """
