@@ -1,0 +1,91 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+  external_labels:
+    monitor: 'cloud-server-benchmark'
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  # Prometheus 自身監控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter - 所有節點的系統監控
+  - job_name: 'node-exporter'
+    scrape_interval: 10s
+    static_configs:
+      - targets:
+          # ⚠️ 請替換為實際的伺服器 IP 地址
+          - 'bench-1-ip:9100'    # 替換為 bench-1 實際 IP，例如: '192.168.1.10:9100'
+          - 'test-ip:9100'       # 替換為 test 實際 IP，例如: '192.168.1.11:9100'
+          - 'bench-2-ip:9100'    # 替換為 bench-2 實際 IP，例如: '192.168.1.12:9100'
+        labels:
+          service: 'node-exporter'
+
+
+  # Blackbox Exporter - 網路探測
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          # ⚠️ 請替換為實際的伺服器 IP 地址（用於 HTTP 探測）
+          - http://bench-1-ip    # 替換為 bench-1 實際 IP，例如: 'http://192.168.1.10'
+          - http://test-ip       # 替換為 test 實際 IP，例如: 'http://192.168.1.11'
+          - http://bench-2-ip    # 替換為 bench-2 實際 IP，例如: 'http://192.168.1.12'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: 'blackbox-tcp'
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          # ⚠️ 請替換為實際的伺服器 IP 地址（用於 TCP 探測）
+          - bench-1-ip:22       # 替換為 bench-1 實際 IP，例如: '192.168.1.10:22'
+          - test-ip:22          # 替換為 test 實際 IP，例如: '192.168.1.11:22'
+          - bench-2-ip:22       # 替換為 bench-2 實際 IP，例如: '192.168.1.12:22'
+          - bench-1-ip:3306     # 替換為 bench-1 實際 IP，例如: '192.168.1.10:3306'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  - job_name: 'blackbox-icmp'
+    metrics_path: /probe
+    params:
+      module: [icmp]
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          # ⚠️ 請替換為實際的伺服器 IP 地址（用於 ICMP Ping 探測）
+          - bench-1-ip          # 替換為 bench-1 實際 IP，例如: '192.168.1.10'
+          - test-ip             # 替換為 test 實際 IP，例如: '192.168.1.11'
+          - bench-2-ip          # 替換為 bench-2 實際 IP，例如: '192.168.1.12'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
