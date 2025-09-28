@@ -27,7 +27,7 @@ fi
 echo "🗄️  資料庫: MySQL 8.0"
 echo "📊 資料庫名稱: ${MYSQL_DATABASE:-benchdb}"
 echo "👤 用戶名稱: ${MYSQL_USER:-benchuser}"
-echo "🔌 端口: 3306"
+echo "🔌 端口: 3380 (對外) -> 3306 (容器內)"
 
 echo "🔄 正在啟動 MySQL 資料庫..."
 
@@ -91,10 +91,10 @@ fi
 echo ""
 echo "🔗 資料庫連接資訊:"
 echo "   ├── 主機: $(hostname -I | awk '{print $1}') (私有 IP)"
-echo "   ├── 端口: 3306"
+echo "   ├── 端口: 3380 (對外)"
 echo "   ├── 資料庫: ${MYSQL_DATABASE:-benchdb}"
 echo "   ├── 用戶: ${MYSQL_USER:-benchuser}"
-echo "   └── Prisma URL: mysql://${MYSQL_USER:-benchuser}:${MYSQL_PASSWORD:-benchpass}@$(hostname -I | awk '{print $1}'):3306/${MYSQL_DATABASE:-benchdb}"
+echo "   └── Prisma URL: mysql://${MYSQL_USER:-benchuser}:${MYSQL_PASSWORD:-benchpass}@$(hostname -I | awk '{print $1}'):3380/${MYSQL_DATABASE:-benchdb}"
 
 echo ""
 echo "📝 管理指令:"
@@ -105,7 +105,7 @@ echo "   └── 停止服務: docker-compose down"
 
 echo ""
 echo "⚠️  重要提醒："
-echo "   請確保 EC2 安全群組開放 3306 端口給 EC2-1"
+echo "   請確保 EC2 安全群組開放 3380 端口給 EC2-1"
 echo "   請將此 IP 地址設定到 EC2-1 的 DATABASE_HOST 環境變數"
 
 echo ""

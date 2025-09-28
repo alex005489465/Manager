@@ -24,7 +24,7 @@ if [ -z "$DATABASE_URL" ] && [ -z "$DATABASE_HOST" ]; then
     exit 1
 fi
 
-echo "📍 框架端點: http://localhost:80"
+echo "📍 框架端點: http://localhost:8080"
 echo "🗄️  資料庫連接: ${DATABASE_URL:-mysql://$DATABASE_USER@$DATABASE_HOST:$DATABASE_PORT/$DATABASE_NAME}"
 echo "📦 ORM: Prisma"
 echo "⚡ 進程管理: PM2"
@@ -48,14 +48,14 @@ echo ""
 echo "🔍 健康檢查:"
 
 # 檢查 nginx
-if curl -s http://localhost/nginx-health > /dev/null; then
+if curl -s http://localhost:8080/nginx-health > /dev/null; then
     echo "✅ Nginx: 正常運行"
 else
     echo "❌ Nginx: 無法連接"
 fi
 
 # 檢查 framework
-if curl -s http://localhost/api/health > /dev/null; then
+if curl -s http://localhost:8080/api/health > /dev/null; then
     echo "✅ Framework: 正常運行"
 else
     echo "❌ Framework: 無法連接"
@@ -66,10 +66,9 @@ fi
 # 顯示可用端點
 echo ""
 echo "📋 可用端點:"
-echo "   ├── 健康檢查: http://localhost/api/health"
-echo "   ├── 查詢測試: http://localhost/api/query"
-echo "   ├── 統計資訊: http://localhost/api/stats"
-echo "   └── Nginx 健康: http://localhost/nginx-health"
+echo "   ├── 健康檢查: http://localhost:8080/api/health"
+echo "   ├── 查詢測試: http://localhost:8080/api/query"
+echo "   └── Nginx 健康: http://localhost:8080/nginx-health"
 
 echo ""
 echo "📝 管理指令:"

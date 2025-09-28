@@ -6,72 +6,44 @@ async function main() {
   console.log('🌱 開始初始化測試數據...');
 
   // 清理現有數據
-  await prisma.requestLog.deleteMany();
-  await prisma.testSession.deleteMany();
-  await prisma.performanceData.deleteMany();
   await prisma.benchmarkTest.deleteMany();
 
   console.log('🧹 清理舊數據完成');
 
-  // 插入基本測試數據
-  const benchmarkData = [];
-  for (let i = 1; i <= 10; i++) {
-    benchmarkData.push({
-      name: `test_${i}`,
-      value: i * 100,
+  // 插入基本測試數據 (10萬條)
+  console.log('⏳ 正在插入 100,000 筆測試數據...');
+
+  const batchSize = 1000;
+  const totalRecords = 100000;
+
+  for (let batch = 0; batch < totalRecords / batchSize; batch++) {
+    const benchmarkData = [];
+    const startId = batch * batchSize + 1;
+
+    for (let i = 0; i < batchSize; i++) {
+      const id = startId + i;
+      benchmarkData.push({
+        name: `test_${id}`,
+        value: id * 10,
+      });
+    }
+
+    await prisma.benchmarkTest.createMany({
+      data: benchmarkData,
     });
+
+    if ((batch + 1) % 10 === 0) {
+      console.log(`   進度: ${((batch + 1) * batchSize).toLocaleString()} / ${totalRecords.toLocaleString()} 筆`);
+    }
   }
 
-  await prisma.benchmarkTest.createMany({
-    data: benchmarkData,
-  });
-
-  console.log('✅ 基本測試數據插入完成 (10 筆)');
-
-  // 插入性能測試數據
-  const performanceData = [];
-  for (let i = 1; i <= 250; i++) {
-    performanceData.push({
-      category: `category_${(i % 10) + 1}`,
-      dataValue: Math.round(Math.random() * 1000 * 100) / 100, // 保留兩位小數
-      description: `Test data entry number ${i}`,
-    });
-  }
-
-  await prisma.performanceData.createMany({
-    data: performanceData,
-  });
-
-  console.log('✅ 性能測試數據插入完成 (250 筆)');
-
-  // 創建測試會話範例
-  const testSession = await prisma.testSession.create({
-    data: {
-      sessionName: 'initialization-test',
-      startTime: new Date(),
-      testType: 'setup',
-      status: 'completed',
-      metadata: {
-        framework: 'express',
-        database: 'mysql',
-        orm: 'prisma',
-        processManager: 'pm2',
-        version: '1.0.0',
-      },
-    },
-  });
-
-  console.log('✅ 測試會話範例創建完成');
+  console.log('✅ 基本測試數據插入完成 (100,000 筆)');
 
   // 統計結果
   const benchmarkCount = await prisma.benchmarkTest.count();
-  const performanceCount = await prisma.performanceData.count();
-  const sessionCount = await prisma.testSession.count();
 
   console.log('📊 數據初始化摘要:');
-  console.log(`   ├── 基本測試數據: ${benchmarkCount} 筆`);
-  console.log(`   ├── 性能測試數據: ${performanceCount} 筆`);
-  console.log(`   └── 測試會話: ${sessionCount} 筆`);
+  console.log(`   └── 基本測試數據: ${benchmarkCount} 筆`);
 
   console.log('🎉 測試數據初始化完成！');
 }
