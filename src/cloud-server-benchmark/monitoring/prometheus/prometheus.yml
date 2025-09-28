@@ -23,10 +23,9 @@ scrape_configs:
     scrape_interval: 10s
     static_configs:
       - targets:
-          # ⚠️ 請替換為實際的伺服器 IP 地址
-          - 'bench-1-ip:9100'    # 替換為 bench-1 實際 IP，例如: '192.168.1.10:9100'
-          - 'test-ip:9100'       # 替換為 test 實際 IP，例如: '192.168.1.11:9100'
-          - 'bench-2-ip:9100'    # 替換為 bench-2 實際 IP，例如: '192.168.1.12:9100'
+          - '3.108.252.22:9100'   # bench-1
+          - '65.0.5.177:9100'     # test
+          # - 'bench-2-ip:9100'   # bench-2 暫時沒有
         labels:
           service: 'node-exporter'
 
@@ -39,10 +38,9 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          # ⚠️ 請替換為實際的伺服器 IP 地址（用於 HTTP 探測）
-          - http://bench-1-ip    # 替換為 bench-1 實際 IP，例如: 'http://192.168.1.10'
-          - http://test-ip       # 替換為 test 實際 IP，例如: 'http://192.168.1.11'
-          - http://bench-2-ip    # 替換為 bench-2 實際 IP，例如: 'http://192.168.1.12'
+          - http://3.108.252.22    # bench-1
+          - http://65.0.5.177      # test
+          # - http://bench-2-ip    # bench-2 暫時沒有
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -58,11 +56,10 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          # ⚠️ 請替換為實際的伺服器 IP 地址（用於 TCP 探測）
-          - bench-1-ip:22       # 替換為 bench-1 實際 IP，例如: '192.168.1.10:22'
-          - test-ip:22          # 替換為 test 實際 IP，例如: '192.168.1.11:22'
-          - bench-2-ip:22       # 替換為 bench-2 實際 IP，例如: '192.168.1.12:22'
-          - bench-1-ip:3306     # 替換為 bench-1 實際 IP，例如: '192.168.1.10:3306'
+          - 3.108.252.22:22     # bench-1 SSH
+          - 65.0.5.177:22       # test SSH
+          # - bench-2-ip:22     # bench-2 暫時沒有
+          - 3.108.252.22:3306   # bench-1 MySQL
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -78,10 +75,9 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          # ⚠️ 請替換為實際的伺服器 IP 地址（用於 ICMP Ping 探測）
-          - bench-1-ip          # 替換為 bench-1 實際 IP，例如: '192.168.1.10'
-          - test-ip             # 替換為 test 實際 IP，例如: '192.168.1.11'
-          - bench-2-ip          # 替換為 bench-2 實際 IP，例如: '192.168.1.12'
+          - 3.108.252.22        # bench-1
+          - 65.0.5.177          # test
+          # - bench-2-ip        # bench-2 暫時沒有
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
