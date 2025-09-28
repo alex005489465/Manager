@@ -32,51 +32,27 @@ async function initDatabase() {
 
 // 靜態端點 - 純框架性能測試
 app.post('/api/health', (req, res) => {
-  const timestamp = new Date().toISOString();
-  const response = {
-    status: 'OK',
-    timestamp: timestamp,
-    service: 'bench-framework',
-    version: '1.0.0',
-    uptime: process.uptime(),
-    memory: process.memoryUsage(),
-    request_id: Math.random().toString(36).substr(2, 9)
-  };
-
-  res.json(response);
+  res.json({ status: 'OK' });
 });
 
 // 簡單查詢端點 - 框架 + 資料庫性能測試
 app.post('/api/query', async (req, res) => {
   const requestId = Math.random().toString(36).substr(2, 9);
+  const { id } = req.body;
+
+  // 如果沒有提供id，使用隨機id
+  const queryId = id || Math.floor(Math.random() * 100000) + 1;
 
   try {
-    // 執行簡單查詢
-    const [currentTime, benchmarkData, recordCount] = await Promise.all([
-      // 獲取當前時間
-      prisma.$queryRaw`SELECT NOW() as current_time, CONNECTION_ID() as connection_id`,
-
-      // 獲取測試數據
-      prisma.benchmarkTest.findFirst({
-        orderBy: { id: 'desc' }
-      }),
-
-      // 計數查詢
-      prisma.benchmarkTest.count()
-    ]);
+    // 根據ID查詢特定記錄
+    const benchmarkData = await prisma.benchmarkTest.findUnique({
+      where: { id: queryId }
+    });
 
     const response = {
-      status: 'OK',
-      timestamp: new Date().toISOString(),
-      service: 'bench-framework',
-      orm: 'prisma',
-      request_id: requestId,
-      database: {
-        current_time: currentTime[0]?.current_time,
-        connection_id: currentTime[0]?.connection_id,
-        record_count: recordCount,
-        latest_record: benchmarkData
-      }
+      id: queryId,
+      found: !!benchmarkData,
+      data: benchmarkData
     };
 
     res.json(response);
@@ -84,9 +60,8 @@ app.post('/api/query', async (req, res) => {
     console.error('Database query error:', error);
     res.status(500).json({
       error: 'Database query failed',
-      message: error.message,
-      timestamp: new Date().toISOString(),
-      request_id: requestId
+      id: queryId,
+      message: error.message
     });
   }
 });
