@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   nginx:
     image: nginx:alpine
     container_name: bench-nginx
     ports:
-      - "8080:80"
+      - "${NGINX_PORT}:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
@@ -14,27 +12,21 @@ services:
       - bench-network
 
   framework:
-    build:
-      context: ./framework
-      dockerfile: Dockerfile
+    image: node:22-alpine
     container_name: bench-framework
+    working_dir: /app
+    command: npm start
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - PORT=${PORT:-3000}
-      - DATABASE_URL=${DATABASE_URL:-mysql://benchuser:benchpass@bench-2-ip:3306/benchdb}
-      - DATABASE_HOST=${DATABASE_HOST:-bench-2-ip}
-      - DATABASE_PORT=${DATABASE_PORT:-3306}
-      - DATABASE_NAME=${DATABASE_NAME:-benchdb}
-      - DATABASE_USER=${DATABASE_USER:-benchuser}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-benchpass}
-      - PM2_INSTANCES=${PM2_INSTANCES:-max}
-      - PM2_MAX_MEMORY_RESTART=${PM2_MAX_MEMORY_RESTART:-1G}
+      - NODE_ENV=${NODE_ENV}
+      - PORT=${PORT}
+      - DATABASE_URL=${DATABASE_URL}
+      - PM2_INSTANCES=${PM2_INSTANCES}
+      - PM2_MAX_MEMORY_RESTART=${PM2_MAX_MEMORY_RESTART}
     volumes:
+      - ./framework:/app
       - ./framework/logs:/app/logs
     networks:
       - bench-network
-    expose:
-      - "3000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
       interval: 30s

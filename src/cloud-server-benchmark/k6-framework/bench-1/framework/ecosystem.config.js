@@ -50,9 +50,6 @@ module.exports = {
       // 資源限制
       max_memory_restart: '1G',
 
-      // 自動重啟條件
-      cron_restart: '0 2 * * *', // 每天凌晨 2 點重啟
-
       // 追蹤設定
       source_map_support: true,
 

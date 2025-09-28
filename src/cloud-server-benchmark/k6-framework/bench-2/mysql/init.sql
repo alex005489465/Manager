@@ -29,9 +29,8 @@ DELIMITER ;
 CALL InsertTestData();
 DROP PROCEDURE InsertTestData;
 
--- 權限設定
-GRANT ALL PRIVILEGES ON benchdb.* TO 'benchuser'@'%';
-FLUSH PRIVILEGES;
+-- 權限設定 (只使用root用戶)
+-- 所有操作都使用root用戶，無需額外權限設定
 
 -- 顯示創建的表
 SHOW TABLES;
