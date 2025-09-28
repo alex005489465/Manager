@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model BenchmarkTest {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  value     Int
+  timestamp DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("benchmark_test")
+  @@index([name], map: "idx_name")
+  @@index([timestamp], map: "idx_timestamp")
+}
+
+model PerformanceData {
+  id          BigInt   @id @default(autoincrement())
+  category    String   @db.VarChar(50)
+  dataValue   Decimal  @map("data_value") @db.Decimal(10, 2)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+
+  @@map("performance_data")
+  @@index([category], map: "idx_category")
+  @@index([createdAt], map: "idx_created_at")
+}
+
+model TestSession {
+  id          String   @id @default(cuid())
+  sessionName String   @map("session_name") @db.VarChar(100)
+  startTime   DateTime @map("start_time") @db.Timestamp(0)
+  endTime     DateTime? @map("end_time") @db.Timestamp(0)
+  status      String   @default("running") @db.VarChar(20)
+  testType    String   @map("test_type") @db.VarChar(50)
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+
+  @@map("test_sessions")
+  @@index([sessionName], map: "idx_session_name")
+  @@index([testType], map: "idx_test_type")
+  @@index([status], map: "idx_status")
+}
+
+model RequestLog {
+  id             BigInt   @id @default(autoincrement())
+  sessionId      String?  @map("session_id")
+  endpoint       String   @db.VarChar(255)
+  method         String   @db.VarChar(10)
+  statusCode     Int      @map("status_code")
+  responseTime   Int      @map("response_time")
+  requestSize    Int?     @map("request_size")
+  responseSize   Int?     @map("response_size")
+  userAgent      String?  @map("user_agent") @db.Text
+  ipAddress      String?  @map("ip_address") @db.VarChar(45)
+  timestamp      DateTime @default(now()) @db.Timestamp(0)
+
+  @@map("request_logs")
+  @@index([sessionId], map: "idx_session_id")
+  @@index([endpoint], map: "idx_endpoint")
+  @@index([statusCode], map: "idx_status_code")
+  @@index([timestamp], map: "idx_timestamp")
+}

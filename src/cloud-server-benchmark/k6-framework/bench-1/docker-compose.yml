@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: bench-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - framework
+    networks:
+      - bench-network
+
+  framework:
+    build:
+      context: ./framework
+      dockerfile: Dockerfile
+    container_name: bench-framework
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${PORT:-3000}
+      - DATABASE_URL=${DATABASE_URL:-mysql://benchuser:benchpass@bench-2-ip:3306/benchdb}
+      - DATABASE_HOST=${DATABASE_HOST:-bench-2-ip}
+      - DATABASE_PORT=${DATABASE_PORT:-3306}
+      - DATABASE_NAME=${DATABASE_NAME:-benchdb}
+      - DATABASE_USER=${DATABASE_USER:-benchuser}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-benchpass}
+      - PM2_INSTANCES=${PM2_INSTANCES:-max}
+      - PM2_MAX_MEMORY_RESTART=${PM2_MAX_MEMORY_RESTART:-1G}
+    volumes:
+      - ./framework/logs:/app/logs
+    networks:
+      - bench-network
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+networks:
+  bench-network:
+    driver: bridge

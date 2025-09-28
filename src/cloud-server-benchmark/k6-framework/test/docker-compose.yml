@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  k6:
+    image: grafana/k6:latest
+    container_name: k6-test
+    volumes:
+      - ./k6/scripts:/scripts:ro
+      - ./k6/results:/results
+    environment:
+      - TARGET_HOST=${TARGET_HOST:-bench-1-ip}
+      - TARGET_PORT=${TARGET_PORT:-80}
+      - TEST_DURATION=${TEST_DURATION:-30s}
+      - VUS=${VUS:-10}
+      - RPS=${RPS:-100}
+    networks:
+      - k6-network
+    command: --help
+    profiles:
+      - manual
+
+  # 靜態端點測試服務
+  k6-health:
+    image: grafana/k6:latest
+    container_name: k6-health-test
+    volumes:
+      - ./k6/scripts:/scripts:ro
+      - ./k6/results:/results
+    environment:
+      - TARGET_HOST=${TARGET_HOST:-bench-1-ip}
+      - TARGET_PORT=${TARGET_PORT:-80}
+      - TEST_DURATION=${TEST_DURATION:-30s}
+      - VUS=${VUS:-10}
+      - RPS=${RPS:-100}
+    networks:
+      - k6-network
+    command: run --out json=/results/health-results.json --out html=/results/health-report.html /scripts/health-test.js
+    profiles:
+      - health
+
+  # 簡單查詢測試服務
+  k6-query:
+    image: grafana/k6:latest
+    container_name: k6-query-test
+    volumes:
+      - ./k6/scripts:/scripts:ro
+      - ./k6/results:/results
+    environment:
+      - TARGET_HOST=${TARGET_HOST:-bench-1-ip}
+      - TARGET_PORT=${TARGET_PORT:-80}
+      - TEST_DURATION=${TEST_DURATION:-30s}
+      - VUS=${VUS:-10}
+      - RPS=${RPS:-100}
+    networks:
+      - k6-network
+    command: run --out json=/results/query-results.json --out html=/results/query-report.html /scripts/query-test.js
+    profiles:
+      - query
+
+networks:
+  k6-network:
+    driver: bridge
