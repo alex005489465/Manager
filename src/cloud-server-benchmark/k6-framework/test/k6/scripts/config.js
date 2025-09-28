@@ -46,17 +46,20 @@ export const config = {
   stages: {
     // 100用戶負載測試
     load100: [
-      { duration: '2m', target: 100 }
+      { duration: '10s', target: 100 },  // 10秒快速爬升到100用戶
+      { duration: '2m', target: 100 }    // 保持100用戶2分鐘
     ],
 
     // 200用戶負載測試
     load200: [
-      { duration: '2m', target: 200 }
+      { duration: '10s', target: 200 },  // 10秒快速爬升到200用戶
+      { duration: '2m', target: 200 }    // 保持200用戶2分鐘
     ],
 
     // 400用戶負載測試
     load400: [
-      { duration: '2m', target: 400 }
+      { duration: '10s', target: 400 },  // 10秒快速爬升到400用戶
+      { duration: '2m', target: 400 }    // 保持400用戶2分鐘
     ]
   },
 

@@ -1,7 +1,7 @@
 import http from 'k6/http';
-import { check, sleep } from 'k6';
+import { check } from 'k6';
 import { config } from './config.js';
-import { handleSummary } from './output.js';
+import { createSummaryHandler } from './output.js';
 
 // 測試配置
 export const options = {
@@ -32,5 +32,5 @@ export default function() {
   });
 }
 
-// 導出輸出處理函數
-export { handleSummary };
+// 創建輸出處理函數 - 從配置中讀取VUS
+export const handleSummary = createSummaryHandler('health', options.stages);

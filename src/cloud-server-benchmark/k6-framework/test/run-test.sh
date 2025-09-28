@@ -62,9 +62,8 @@ for test in "${tests[@]}"; do
     # 修改config.js中的負載配置
     docker exec k6-test sed -i "s/stages: config\.stages\.[^,]*/stages: config.stages.$load_type/" /scripts/$script
 
-    # 執行k6測試，設置TEST_NAME環境變數
-    test_name="${script%.*}-$load_type"
-    if docker exec -e TEST_NAME="$test_name" k6-test k6 run /scripts/$script > /dev/null 2>&1; then
+    # 執行k6測試
+    if docker exec k6-test k6 run /scripts/$script > /dev/null 2>&1; then
         echo "✅ 完成"
     else
         echo "❌ 失敗"
