@@ -2,6 +2,8 @@ services:
   k6:
     image: grafana/k6:latest
     container_name: k6-test
+    entrypoint: ["/bin/sh", "-c", "sleep infinity"]
+    user: "1000:1000"
     volumes:
       - ./k6/scripts:/scripts:ro
       - ./k6/results:/results:rw

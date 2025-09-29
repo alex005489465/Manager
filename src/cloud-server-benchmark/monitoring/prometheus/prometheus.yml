@@ -23,9 +23,9 @@ scrape_configs:
     scrape_interval: 10s
     static_configs:
       - targets:
-          - '3.108.252.22:9100'   # bench-1
-          - '65.0.5.177:9100'     # test
-          # - 'bench-2-ip:9100'   # bench-2 暫時沒有
+          - '13.233.122.195:9100'   # bench-1
+          - '13.203.23.144:9100'    # bench-2
+          - '65.0.106.33:9100'      # test
         labels:
           service: 'node-exporter'
 
@@ -38,9 +38,9 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          - http://3.108.252.22    # bench-1
-          - http://65.0.5.177      # test
-          # - http://bench-2-ip    # bench-2 暫時沒有
+          - http://13.233.122.195    # bench-1
+          - http://13.203.23.144     # bench-2
+          - http://65.0.106.33       # test
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -56,10 +56,10 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          - 3.108.252.22:22     # bench-1 SSH
-          - 65.0.5.177:22       # test SSH
-          # - bench-2-ip:22     # bench-2 暫時沒有
-          - 3.108.252.22:3306   # bench-1 MySQL
+          - 13.233.122.195:22     # bench-1 SSH
+          - 13.203.23.144:22      # bench-2 SSH
+          - 65.0.106.33:22        # test SSH
+          - 13.233.122.195:3306   # bench-1 MySQL
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -75,9 +75,9 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          - 3.108.252.22        # bench-1
-          - 65.0.5.177          # test
-          # - bench-2-ip        # bench-2 暫時沒有
+          - 13.233.122.195        # bench-1
+          - 13.203.23.144         # bench-2
+          - 65.0.106.33           # test
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

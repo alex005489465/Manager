@@ -3,9 +3,13 @@ import { check } from 'k6';
 import { config } from './config.js';
 import { createSummaryHandler } from './output.js';
 
+// 動態選擇負載配置
+const loadType = __ENV.LOAD_TYPE || 'load100';
+const selectedStages = config.stages[loadType];
+
 // 測試配置
 export const options = {
-  stages: config.stages.load100,
+  stages: selectedStages,
   thresholds: {
     'http_req_duration': [`p(95)<${config.thresholds.http_req_duration.p95}`],
     'http_req_failed': [`rate<${config.thresholds.http_req_failed.rate}`],

@@ -15,7 +15,7 @@ services:
     image: node:22-alpine
     container_name: bench-framework
     working_dir: /app
-    command: npm start
+    command: sh -c "npm install && npm start"
     environment:
       - NODE_ENV=${NODE_ENV}
       - PORT=${PORT}
