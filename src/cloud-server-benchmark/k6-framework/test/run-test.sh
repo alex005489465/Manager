@@ -39,12 +39,12 @@ docker exec k6-test mkdir -p /results
 # 測試場景定義 - 2框架 × 2端點 × 3負載
 frameworks=("node" "phalcon")
 tests=(
+    "health-test.js:load50:Health 50用戶"
     "health-test.js:load100:Health 100用戶"
     "health-test.js:load200:Health 200用戶"
-    "health-test.js:load400:Health 400用戶"
+    "query-test.js:load50:Query 50用戶"
     "query-test.js:load100:Query 100用戶"
     "query-test.js:load200:Query 200用戶"
-    "query-test.js:load400:Query 400用戶"
 )
 
 total_tests=$((${#frameworks[@]} * ${#tests[@]}))

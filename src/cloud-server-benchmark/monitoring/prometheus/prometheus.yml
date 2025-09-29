@@ -23,9 +23,9 @@ scrape_configs:
     scrape_interval: 10s
     static_configs:
       - targets:
-          - '13.233.122.195:9100'   # bench-1
-          - '13.203.23.144:9100'    # bench-2
-          - '65.0.106.33:9100'      # test
+          - '3.108.64.79:9100'      # bench-1
+          - '13.203.70.122:9100'    # bench-2
+          - '13.201.133.79:9100'    # test
         labels:
           service: 'node-exporter'
 
@@ -38,9 +38,9 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          - http://13.233.122.195    # bench-1
-          - http://13.203.23.144     # bench-2
-          - http://65.0.106.33       # test
+          - http://3.108.64.79       # bench-1
+          - http://13.203.70.122     # bench-2
+          - http://13.201.133.79     # test
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -56,10 +56,10 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          - 13.233.122.195:22     # bench-1 SSH
-          - 13.203.23.144:22      # bench-2 SSH
-          - 65.0.106.33:22        # test SSH
-          - 13.233.122.195:3306   # bench-1 MySQL
+          - 3.108.64.79:22        # bench-1 SSH
+          - 13.203.70.122:22      # bench-2 SSH
+          - 13.201.133.79:22      # test SSH
+          - 3.108.64.79:3306      # bench-1 MySQL
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -75,9 +75,9 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          - 13.233.122.195        # bench-1
-          - 13.203.23.144         # bench-2
-          - 65.0.106.33           # test
+          - 3.108.64.79           # bench-1
+          - 13.203.70.122         # bench-2
+          - 13.201.133.79         # test
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

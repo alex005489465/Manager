@@ -62,6 +62,12 @@ export const config = {
 
   // 負載階段配置
   stages: {
+    // 50用戶負載測試
+    load50: [
+      { duration: '10s', target: 50 },   // 10秒快速爬升到50用戶
+      { duration: '2m', target: 50 }     // 保持50用戶2分鐘
+    ],
+
     // 100用戶負載測試
     load100: [
       { duration: '10s', target: 100 },  // 10秒快速爬升到100用戶
@@ -72,12 +78,6 @@ export const config = {
     load200: [
       { duration: '10s', target: 200 },  // 10秒快速爬升到200用戶
       { duration: '2m', target: 200 }    // 保持200用戶2分鐘
-    ],
-
-    // 400用戶負載測試
-    load400: [
-      { duration: '10s', target: 400 },  // 10秒快速爬升到400用戶
-      { duration: '2m', target: 400 }    // 保持400用戶2分鐘
     ]
   },
 

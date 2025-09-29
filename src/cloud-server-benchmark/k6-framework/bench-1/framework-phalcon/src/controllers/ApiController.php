@@ -44,13 +44,14 @@ class ApiController extends Controller
             // 查詢資料庫
             $benchmarkData = BenchmarkTest::findFirst([
                 'conditions' => 'id = :id:',
+                'columns' => 'id', // 只選擇 id 欄位
                 'bind' => ['id' => $queryId]
-            ]);
+            ])->toArray();
 
             $response = [
-                'id' => $queryId,
-                'found' => $benchmarkData !== null,
-                'data' => $benchmarkData ? $benchmarkData->toArray() : null
+                'id' => $benchmarkData['id'] ?? null,
+                // 'found' => $benchmarkData !== null,
+                // 'data' => $benchmarkData ? $benchmarkData->toArray() : null
             ];
 
             $this->response->setJsonContent($response);

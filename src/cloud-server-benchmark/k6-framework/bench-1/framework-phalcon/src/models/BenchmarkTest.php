@@ -15,9 +15,4 @@ class BenchmarkTest extends Model
     {
         $this->setSource('benchmark_test');
     }
-
-    public function getSource(): string
-    {
-        return 'benchmark_test';
-    }
 }

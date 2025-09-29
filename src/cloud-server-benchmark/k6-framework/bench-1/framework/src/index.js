@@ -46,13 +46,14 @@ app.post('/api/query', async (req, res) => {
   try {
     // 根據ID查詢特定記錄
     const benchmarkData = await prisma.benchmarkTest.findUnique({
-      where: { id: queryId }
+      where: { id: queryId },
+      select: { id: true }
     });
 
     const response = {
-      id: queryId,
-      found: !!benchmarkData,
-      data: benchmarkData
+      id: benchmarkData.id || null,
+      // found: !!benchmarkData,
+      // data: benchmarkData
     };
 
     res.json(response);

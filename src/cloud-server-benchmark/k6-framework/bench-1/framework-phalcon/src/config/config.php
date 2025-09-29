@@ -1,6 +1,6 @@
 <?php
 
-use Phalcon\Config\Config;
+use Phalcon\Config;
 
 return new Config([
     'database' => [
@@ -8,7 +8,7 @@ return new Config([
         'host'     => parse_url(getenv('DATABASE_URL'), PHP_URL_HOST) ?: 'localhost',
         'username' => parse_url(getenv('DATABASE_URL'), PHP_URL_USER) ?: 'root',
         'password' => parse_url(getenv('DATABASE_URL'), PHP_URL_PASS) ?: '',
-        'dbname'   => ltrim(parse_url(getenv('DATABASE_URL'), PHP_URL_PATH) ?: '/benchmark', '/'),
+        'dbname'   => ltrim(parse_url(getenv('DATABASE_URL'), PHP_URL_PATH) ?: '/benchdb', '/'),
         'port'     => parse_url(getenv('DATABASE_URL'), PHP_URL_PORT) ?: 3306,
         'charset'  => 'utf8mb4',
         'options'  => [
