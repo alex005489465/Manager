@@ -2,10 +2,28 @@
 // 提供所有測試腳本的共用配置選項
 
 export const config = {
+  // 框架配置
+  frameworks: {
+    node: {
+      port: '8080',
+      name: 'node'
+    },
+    phalcon: {
+      port: '8081',
+      name: 'phalcon'
+    }
+  },
+
   // 目標服務器配置
   target: {
     host: __ENV.TARGET_HOST,
-    port: '8080',
+    framework: __ENV.FRAMEWORK || 'node',
+    get port() {
+      return config.frameworks[this.framework]?.port || '8080';
+    },
+    get frameworkName() {
+      return config.frameworks[this.framework]?.name || 'node';
+    },
     protocol: 'http'
   },
 

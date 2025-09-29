@@ -9,3 +9,4 @@ services:
       - ./k6/results:/results:rw
     environment:
       - TARGET_HOST=${TARGET_HOST}
+      - FRAMEWORK=${FRAMEWORK}

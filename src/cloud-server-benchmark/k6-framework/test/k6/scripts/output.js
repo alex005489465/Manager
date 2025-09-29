@@ -1,4 +1,5 @@
 // k6 測試結果輸出處理
+import { config } from './config.js';
 
 // 生成測試摘要
 export function createSummaryHandler(testType, currentStages) {
@@ -6,7 +7,8 @@ export function createSummaryHandler(testType, currentStages) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     // 從stages中提取VUS數量
     const vusLevel = currentStages[0]?.target || 'unknown';
-    const testName = `${testType}-${vusLevel}vus`;
+    const framework = config.target.frameworkName;
+    const testName = `${framework}-${testType}-${vusLevel}vus`;
 
     // 提取關鍵指標
     const totalDuration = Math.round(data.state.testRunDurationMs / 1000);
@@ -14,6 +16,7 @@ export function createSummaryHandler(testType, currentStages) {
     const summary = {
       test_info: {
         name: testName,
+        framework: framework,
         type: testType,
         vus_level: vusLevel,
         timestamp: new Date().toISOString(),

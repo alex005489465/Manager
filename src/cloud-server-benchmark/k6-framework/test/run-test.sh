@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # k6 性能測試統一執行腳本
-# 自動執行所有測試場景：2端點 × 3負載 = 6個測試
+# 自動執行所有測試場景：2框架 × 2端點 × 3負載 = 12個測試
 
-echo "🚀 開始k6性能測試 (2端點 × 3負載)"
+echo "🚀 開始k6性能測試 (2框架 × 2端點 × 3負載)"
 
 # 檢查環境變數檔案
 if [ ! -f .env ]; then
@@ -24,7 +24,7 @@ if [ -z "$TARGET_HOST" ]; then
     exit 1
 fi
 
-echo "📍 目標: http://${TARGET_HOST}:8080"
+echo "📍 目標: http://${TARGET_HOST}:8080 (Node.js), http://${TARGET_HOST}:8081 (Phalcon)"
 
 # 檢查k6容器是否運行
 if ! docker ps | grep -q "k6-test"; then
@@ -36,7 +36,8 @@ fi
 # 確保結果目錄存在
 docker exec k6-test mkdir -p /results
 
-# 測試場景定義
+# 測試場景定義 - 2框架 × 2端點 × 3負載
+frameworks=("node" "phalcon")
 tests=(
     "health-test.js:load100:Health 100用戶"
     "health-test.js:load200:Health 200用戶"
@@ -46,28 +47,33 @@ tests=(
     "query-test.js:load400:Query 400用戶"
 )
 
-total=${#tests[@]}
+total_tests=$((${#frameworks[@]} * ${#tests[@]}))
 current=0
 
-# 執行所有測試
-for test in "${tests[@]}"; do
-    current=$((current + 1))
-
-    # 解析測試參數
-    IFS=':' read -r script load_type description <<< "$test"
-
+# 執行所有測試 - 雙重迴圈
+for framework in "${frameworks[@]}"; do
     echo ""
-    echo "▶️  [$current/$total] $description 測試..."
+    echo "🔧 測試框架: $framework"
 
-    # 執行k6測試，通過環境變數傳遞負載類型
-    if docker exec -e LOAD_TYPE=$load_type k6-test k6 run /scripts/$script; then
-        echo "✅ 完成"
-    else
-        echo "❌ 失敗"
-    fi
+    for test in "${tests[@]}"; do
+        current=$((current + 1))
 
-    # 測試間短暫休息
-    sleep 2
+        # 解析測試參數
+        IFS=':' read -r script load_type description <<< "$test"
+
+        echo ""
+        echo "▶️  [$current/$total_tests] $framework - $description 測試..."
+
+        # 執行k6測試，通過環境變數傳遞框架和負載類型
+        if docker exec -e FRAMEWORK=$framework -e LOAD_TYPE=$load_type k6-test k6 run /scripts/$script; then
+            echo "✅ 完成"
+        else
+            echo "❌ 失敗"
+        fi
+
+        # 測試間短暫休息
+        sleep 2
+    done
 done
 
 echo ""
